@@ -25,17 +25,17 @@ const (
 //
 // See https://developer.github.com/early-access/integrations/authentication/#as-an-installation
 type InstallationTransport struct {
-	tr             http.RoundTripper // tr is the underlying roundtripper being wrapped
+	BaseURL        string            // baseURL is the scheme and host for GitHub API , defaults to https://api.github.com
 	client         *http.Client      // client is used to connect to GitHub to request for tokens
+	tr             http.RoundTripper // tr is the underlying roundtripper being wrapped
 	key            *rsa.PrivateKey   // key is the GitHub Integration's private key
 	integrationID  int               // integrationID is the GitHub Integration's Installation ID
 	installationID int               // installationID is the GitHub Integration's Installation ID
-	token          *accessToken      // token is the installation's access token
-	BaseURL        string            // baseURL is the scheme and host for GitHub API , defaults to https://api.github.com
+	token          *AccessToken      // token is the installation's access token
 }
 
-// accessToken is an installation access token response from GitHub
-type accessToken struct {
+// AccessToken is an installation access token response from GitHub
+type AccessToken struct {
 	Token     string    `json:"token"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
