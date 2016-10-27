@@ -1,4 +1,4 @@
-package installationTransport
+package ghinstallation
 
 import (
 	"crypto/rsa"
@@ -19,12 +19,12 @@ const (
 	apiBaseURL   = "https://api.github.com"
 )
 
-// InstallationTransport provides a http.RoundTripper by wrapping an existing
+// Transport provides a http.RoundTripper by wrapping an existing
 // http.RoundTripper and provides GitHub Integration authentication as an
 // installation.
 //
 // See https://developer.github.com/early-access/integrations/authentication/#as-an-installation
-type InstallationTransport struct {
+type Transport struct {
 	BaseURL        string            // baseURL is the scheme and host for GitHub API, defaults to https://api.github.com
 	tr             http.RoundTripper // tr is the underlying roundtripper being wrapped
 	key            *rsa.PrivateKey   // key is the GitHub Integration's private key
@@ -41,10 +41,10 @@ type accessToken struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-var _ http.RoundTripper = &InstallationTransport{}
+var _ http.RoundTripper = &Transport{}
 
-// NewKeyFromFile returns an InstallationTransport using a private key from file.
-func NewKeyFromFile(tr http.RoundTripper, integrationID, installationID int, privateKeyFile string) (*InstallationTransport, error) {
+// NewKeyFromFile returns an Transport using a private key from file.
+func NewKeyFromFile(tr http.RoundTripper, integrationID, installationID int, privateKeyFile string) (*Transport, error) {
 	privateKey, err := ioutil.ReadFile(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read private key: %s", err)
@@ -52,15 +52,15 @@ func NewKeyFromFile(tr http.RoundTripper, integrationID, installationID int, pri
 	return New(tr, integrationID, installationID, privateKey)
 }
 
-// New returns an InstallationTransport using private key. The key is parsed
+// New returns an Transport using private key. The key is parsed
 // and if any errors occur the transport is nil and error is non-nil.
 //
 // The provided tr http.RoundTripper should be shared between multiple
 // installations to ensure reuse of underlying TCP connections.
 //
-// The returned InstallationTransport is safe to be used concurrently.
-func New(tr http.RoundTripper, integrationID, installationID int, privateKey []byte) (*InstallationTransport, error) {
-	t := &InstallationTransport{
+// The returned Transport is safe to be used concurrently.
+func New(tr http.RoundTripper, integrationID, installationID int, privateKey []byte) (*Transport, error) {
+	t := &Transport{
 		tr:             tr,
 		integrationID:  integrationID,
 		installationID: installationID,
@@ -76,7 +76,7 @@ func New(tr http.RoundTripper, integrationID, installationID int, privateKey []b
 }
 
 // RoundTrip implements http.RoundTripper interface.
-func (t *InstallationTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	t.mu.Lock()
 	if t.token == nil || t.token.ExpiresAt.Add(-time.Minute).Before(time.Now()) {
 		// Token is not set or expired/nearly expired, so refresh
@@ -93,7 +93,7 @@ func (t *InstallationTransport) RoundTrip(req *http.Request) (*http.Response, er
 	return resp, err
 }
 
-func (t *InstallationTransport) refreshToken() error {
+func (t *Transport) refreshToken() error {
 	// TODO these claims could probably be reused between installations before expiry
 	claims := &jwt.StandardClaims{
 		IssuedAt:  time.Now().Unix(),

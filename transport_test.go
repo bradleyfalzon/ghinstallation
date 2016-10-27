@@ -1,4 +1,4 @@
-package installationTransport
+package ghinstallation
 
 import (
 	"encoding/json"
@@ -55,7 +55,7 @@ func TestNew(t *testing.T) {
 		switch r.RequestURI {
 		case fmt.Sprintf("/installations/%d/access_tokens", installationID):
 			// respond with any token to installation transport
-			js, _ := json.Marshal(AccessToken{
+			js, _ := json.Marshal(accessToken{
 				Token:     token,
 				ExpiresAt: time.Now().Add(5 * time.Minute),
 			})

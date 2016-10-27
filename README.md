@@ -1,21 +1,30 @@
-# InstallationTransport
+# ghinstallation
 
-[![GoDoc](https://godoc.org/github.com/bradleyfalzon/installationTransport?status.svg)](https://godoc.org/github.com/bradleyfalzon/installationTransport)
+[![GoDoc](https://godoc.org/github.com/bradleyfalzon/ghinstallation?status.svg)](https://godoc.org/github.com/bradleyfalzon/ghinstallation)
 
-`installationTransport` provides a `http.RoundTripper` to provide authentication as an installation for GitHub
+`ghinstallation` provides `Transport`, which implements `http.RoundTripper` to provide authentication as an installation for GitHub
 Integrations.
 
 See https://developer.github.com/early-access/integrations/authentication/
 
 # Example
 
+Get the package:
+
+```bash
+go get -u github.com/bradleyfalzon/ghinstallation
+```
+
+Usage:
+
 ```go
-// Shared transport to reuse TCP connections, wrapped by installationTransport.
+// Shared transport to reuse TCP connections.
 tr := &http.Transport{}
 
-itr, err := installationTransport.NewKeyFromFile(tr, 1, 99, "2016-10-19.private-key.pem")
+// Wrap the shared transport for use with the integration ID 1 authenticating with installation ID 99.
+itr, err := ghinstallation.NewKeyFromFile(tr, 1, 99, "2016-10-19.private-key.pem")
 
-// Use installationTransport with github.com/google/go-github
+// Use installation transport with github.com/google/go-github
 client := github.NewClient(http.Client{Transport: itr})
 ```
 
