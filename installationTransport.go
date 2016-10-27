@@ -25,7 +25,7 @@ const (
 //
 // See https://developer.github.com/early-access/integrations/authentication/#as-an-installation
 type InstallationTransport struct {
-	BaseURL        string            // baseURL is the scheme and host for GitHub API , defaults to https://api.github.com
+	BaseURL        string            // baseURL is the scheme and host for GitHub API, defaults to https://api.github.com
 	client         *http.Client      // client is used to connect to GitHub to request for tokens
 	tr             http.RoundTripper // tr is the underlying roundtripper being wrapped
 	key            *rsa.PrivateKey   // key is the GitHub Integration's private key
@@ -39,6 +39,8 @@ type AccessToken struct {
 	Token     string    `json:"token"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
+
+var _ http.RoundTripper = &InstallationTransport{}
 
 // NewKeyFromFile returns an InstallationTransport using a private key from file.
 func NewKeyFromFile(tr http.RoundTripper, integrationID, installationID int, privateKeyFile string) (*InstallationTransport, error) {
@@ -69,7 +71,7 @@ func (t *InstallationTransport) RoundTrip(req *http.Request) (*http.Response, er
 	if t.token == nil || t.token.ExpiresAt.Add(-time.Minute).Before(time.Now()) {
 		// Token is not set or expired/nearly expired, so refresh
 		if err := t.refreshToken(); err != nil {
-			return nil, fmt.Errorf("could not refresh installation token: %s", err)
+			return nil, fmt.Errorf("could not refresh installation id %v's token: %s", t.installationID, err)
 		}
 	}
 
