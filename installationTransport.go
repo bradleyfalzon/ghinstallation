@@ -20,9 +20,8 @@ const (
 )
 
 // InstallationTransport provides a http.RoundTripper by wrapping an existing
-// http.RoundTripper (that's shared between multiple installation transports to
-// reuse underlying http connections), but provides GitHub Integration
-// authentication as an installation.
+// http.RoundTripper and provides GitHub Integration authentication as an
+// installation.
 //
 // See https://developer.github.com/early-access/integrations/authentication/#as-an-installation
 type InstallationTransport struct {
@@ -33,11 +32,11 @@ type InstallationTransport struct {
 	installationID int               // installationID is the GitHub Integration's Installation ID
 
 	mu    *sync.Mutex  // mu protects token
-	token *AccessToken // token is the installation's access token
+	token *accessToken // token is the installation's access token
 }
 
-// AccessToken is an installation access token response from GitHub
-type AccessToken struct {
+// accessToken is an installation access token response from GitHub
+type accessToken struct {
 	Token     string    `json:"token"`
 	ExpiresAt time.Time `json:"expires_at"`
 }
