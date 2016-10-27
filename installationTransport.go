@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -18,7 +19,7 @@ const (
 	apiBaseURL   = "https://api.github.com"
 )
 
-// installationTransport provides a http.RoundTripper by wrapping an existing
+// InstallationTransport provides a http.RoundTripper by wrapping an existing
 // http.RoundTripper (that's shared between multiple installation transports to
 // reuse underlying http connections), but provides GitHub Integration
 // authentication as an installation.
@@ -26,12 +27,13 @@ const (
 // See https://developer.github.com/early-access/integrations/authentication/#as-an-installation
 type InstallationTransport struct {
 	BaseURL        string            // baseURL is the scheme and host for GitHub API, defaults to https://api.github.com
-	client         *http.Client      // client is used to connect to GitHub to request for tokens
 	tr             http.RoundTripper // tr is the underlying roundtripper being wrapped
 	key            *rsa.PrivateKey   // key is the GitHub Integration's private key
 	integrationID  int               // integrationID is the GitHub Integration's Installation ID
 	installationID int               // installationID is the GitHub Integration's Installation ID
-	token          *AccessToken      // token is the installation's access token
+
+	mu    *sync.Mutex  // mu protects token
+	token *AccessToken // token is the installation's access token
 }
 
 // AccessToken is an installation access token response from GitHub
@@ -51,12 +53,20 @@ func NewKeyFromFile(tr http.RoundTripper, integrationID, installationID int, pri
 	return New(tr, integrationID, installationID, privateKey)
 }
 
+// New returns an InstallationTransport using private key. The key is parsed
+// and if any errors occur the transport is nil and error is non-nil.
+//
+// The provided tr http.RoundTripper should be shared between multiple
+// installations to ensure reuse of underlying TCP connections.
+//
+// The returned InstallationTransport is safe to be used concurrently.
 func New(tr http.RoundTripper, integrationID, installationID int, privateKey []byte) (*InstallationTransport, error) {
 	t := &InstallationTransport{
 		tr:             tr,
 		integrationID:  integrationID,
 		installationID: installationID,
 		BaseURL:        apiBaseURL,
+		mu:             &sync.Mutex{},
 	}
 	var err error
 	t.key, err = jwt.ParseRSAPrivateKeyFromPEM(privateKey)
@@ -68,12 +78,15 @@ func New(tr http.RoundTripper, integrationID, installationID int, privateKey []b
 
 // RoundTrip implements http.RoundTripper interface.
 func (t *InstallationTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	t.mu.Lock()
 	if t.token == nil || t.token.ExpiresAt.Add(-time.Minute).Before(time.Now()) {
 		// Token is not set or expired/nearly expired, so refresh
 		if err := t.refreshToken(); err != nil {
+			t.mu.Unlock()
 			return nil, fmt.Errorf("could not refresh installation id %v's token: %s", t.installationID, err)
 		}
 	}
+	t.mu.Unlock()
 
 	req.Header.Set("Authorization", "token "+t.token.Token)
 	req.Header.Set("Accept", acceptHeader)
