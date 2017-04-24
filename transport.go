@@ -23,9 +23,13 @@ const (
 // http.RoundTripper and provides GitHub Integration authentication as an
 // installation.
 //
+// Client can also be overwritten, and is useful to change to one which
+// provides retry logic if you do experience retryable errors.
+//
 // See https://developer.github.com/early-access/integrations/authentication/#as-an-installation
 type Transport struct {
 	BaseURL        string            // baseURL is the scheme and host for GitHub API, defaults to https://api.github.com
+	Client         Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
 	tr             http.RoundTripper // tr is the underlying roundtripper being wrapped
 	key            *rsa.PrivateKey   // key is the GitHub Integration's private key
 	integrationID  int               // integrationID is the GitHub Integration's Installation ID
@@ -52,6 +56,12 @@ func NewKeyFromFile(tr http.RoundTripper, integrationID, installationID int, pri
 	return New(tr, integrationID, installationID, privateKey)
 }
 
+// Client is a HTTP client which sends a http.Request and returns a http.Response
+// or an error.
+type Client interface {
+	Do(*http.Request) (*http.Response, error)
+}
+
 // New returns an Transport using private key. The key is parsed
 // and if any errors occur the transport is nil and error is non-nil.
 //
@@ -65,6 +75,7 @@ func New(tr http.RoundTripper, integrationID, installationID int, privateKey []b
 		integrationID:  integrationID,
 		installationID: installationID,
 		BaseURL:        apiBaseURL,
+		Client:         &http.Client{Transport: tr},
 		mu:             &sync.Mutex{},
 	}
 	var err error
@@ -114,8 +125,7 @@ func (t *Transport) refreshToken() error {
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", ss))
 	req.Header.Set("Accept", acceptHeader)
 
-	client := &http.Client{Transport: t.tr}
-	resp, err := client.Do(req)
+	resp, err := t.Client.Do(req)
 	if err != nil {
 		return fmt.Errorf("could not get access_tokens from GitHub API for installation ID %v: %v", t.installationID, err)
 	}
