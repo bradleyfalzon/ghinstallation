@@ -13,8 +13,8 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-// acceptHeader is the GitHub Integrations Preview Accept header.
 const (
+	// acceptHeader is the GitHub Integrations Preview Accept header.
 	acceptHeader = "application/vnd.github.machine-man-preview+json"
 	apiBaseURL   = "https://api.github.com"
 )
@@ -26,7 +26,7 @@ const (
 // Client can also be overwritten, and is useful to change to one which
 // provides retry logic if you do experience retryable errors.
 //
-// See https://developer.github.com/early-access/integrations/authentication/#as-an-installation
+// See https://developer.github.com/apps/building-integrations/setting-up-and-registering-github-apps/about-authentication-options-for-github-apps/
 type Transport struct {
 	BaseURL        string            // baseURL is the scheme and host for GitHub API, defaults to https://api.github.com
 	Client         Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
@@ -68,7 +68,7 @@ type Client interface {
 // The provided tr http.RoundTripper should be shared between multiple
 // installations to ensure reuse of underlying TCP connections.
 //
-// The returned Transport is safe to be used concurrently.
+// The returned Transport's RoundTrip method is safe to be used concurrently.
 func New(tr http.RoundTripper, integrationID, installationID int, privateKey []byte) (*Transport, error) {
 	t := &Transport{
 		tr:             tr,
