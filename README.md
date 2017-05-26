@@ -2,10 +2,13 @@
 
 [![GoDoc](https://godoc.org/github.com/bradleyfalzon/ghinstallation?status.svg)](https://godoc.org/github.com/bradleyfalzon/ghinstallation)
 
-`ghinstallation` provides `Transport`, which implements `http.RoundTripper` to provide authentication as an installation for GitHub
-Integrations.
+`ghinstallation` provides `Transport`, which implements `http.RoundTripper` to provide authentication as an installation
+for GitHub Apps.
 
-See https://developer.github.com/early-access/integrations/authentication/
+This library is designed to provide automatic authentication for https://github.com/google/go-github or your own HTTP
+client.
+
+See https://developer.github.com/apps/building-integrations/setting-up-and-registering-github-apps/about-authentication-options-for-github-apps/
 
 # Example
 
