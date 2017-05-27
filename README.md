@@ -21,14 +21,21 @@ go get -u github.com/bradleyfalzon/ghinstallation
 Usage:
 
 ```go
-// Shared transport to reuse TCP connections.
-tr := &http.Transport{}
+import "github.com/bradleyfalzon/ghinstallation"
 
-// Wrap the shared transport for use with the integration ID 1 authenticating with installation ID 99.
-itr, err := ghinstallation.NewKeyFromFile(tr, 1, 99, "2016-10-19.private-key.pem")
+func main() {
+    // Shared transport to reuse TCP connections.
+    tr := http.DefaultTransport
 
-// Use installation transport with github.com/google/go-github
-client := github.NewClient(http.Client{Transport: itr})
+    // Wrap the shared transport for use with the integration ID 1 authenticating with installation ID 99.
+    itr, err := ghinstallation.NewKeyFromFile(tr, 1, 99, "2016-10-19.private-key.pem")
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    // Use installation transport with github.com/google/go-github
+    client := github.NewClient(http.Client{Transport: itr})
+}
 ```
 
 # License
