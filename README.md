@@ -34,7 +34,7 @@ func main() {
     }
 
     // Use installation transport with github.com/google/go-github
-    client := github.NewClient(http.Client{Transport: itr})
+    client := github.NewClient(&http.Client{Transport: itr})
 }
 ```
 
