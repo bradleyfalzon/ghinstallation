@@ -88,20 +88,30 @@ func New(tr http.RoundTripper, integrationID, installationID int, privateKey []b
 
 // RoundTrip implements http.RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	t.mu.Lock()
-	if t.token == nil || t.token.ExpiresAt.Add(-time.Minute).Before(time.Now()) {
-		// Token is not set or expired/nearly expired, so refresh
-		if err := t.refreshToken(); err != nil {
-			t.mu.Unlock()
-			return nil, fmt.Errorf("could not refresh installation id %v's token: %s", t.installationID, err)
-		}
+	token, err := t.Token()
+	if err != nil {
+		return nil, err
 	}
-	t.mu.Unlock()
 
-	req.Header.Set("Authorization", "token "+t.token.Token)
+	req.Header.Set("Authorization", "token "+token)
 	req.Header.Set("Accept", acceptHeader)
 	resp, err := t.tr.RoundTrip(req)
 	return resp, err
+}
+
+// Token checks the active token expiration and renews if necessary. Token returns
+// a valid access token. If renewal fails an error is returned.
+func (t *Transport) Token() (string, error) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.token == nil || t.token.ExpiresAt.Add(-time.Minute).Before(time.Now()) {
+		// Token is not set or expired/nearly expired, so refresh
+		if err := t.refreshToken(); err != nil {
+			return "", fmt.Errorf("could not refresh installation id %v's token: %s", t.installationID, err)
+		}
+	}
+
+	return t.token.Token, nil
 }
 
 func (t *Transport) refreshToken() error {
