@@ -132,3 +132,44 @@ func TestNewKeyFromFile(t *testing.T) {
 		t.Fatal("unexpected error:", err)
 	}
 }
+
+func TestNew_appendHeader(t *testing.T) {
+	var headers http.Header
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		headers = r.Header
+		fmt.Fprintln(w, `{}`) // dummy response that looks like json
+	}))
+	defer ts.Close()
+
+	// Create a new request adding our own Accept header
+	myheader := "my-header"
+	req, err := http.NewRequest("GET", ts.URL+"/auth/with/installation/token/endpoint", nil)
+	if err != nil {
+		t.Fatal("unexpected error from http.NewRequest:", err)
+	}
+	req.Header.Add("Accept", myheader)
+
+	tr, err := New(&http.Transport{}, integrationID, installationID, key)
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+	tr.BaseURL = ts.URL
+
+	client := http.Client{Transport: tr}
+	_, err = client.Do(req)
+	if err != nil {
+		t.Fatal("unexpected error from client:", err)
+	}
+
+	found := false
+	for _, v := range headers["Accept"] {
+		if v == myheader {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Errorf("could not find %v in request's accept headers: %v", myheader, headers["Accept"])
+	}
+}
