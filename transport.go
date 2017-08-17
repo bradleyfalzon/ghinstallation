@@ -94,7 +94,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	req.Header.Set("Authorization", "token "+token)
-	req.Header.Set("Accept", acceptHeader)
+	req.Header.Add("Accept", acceptHeader)
 	resp, err := t.tr.RoundTrip(req)
 	return resp, err
 }
