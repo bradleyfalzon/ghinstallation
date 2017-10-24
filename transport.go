@@ -1,16 +1,12 @@
 package ghinstallation
 
 import (
-	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strconv"
 	"sync"
 	"time"
-
-	jwt "github.com/dgrijalva/jwt-go"
 )
 
 const (
@@ -31,9 +27,9 @@ type Transport struct {
 	BaseURL        string            // baseURL is the scheme and host for GitHub API, defaults to https://api.github.com
 	Client         Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
 	tr             http.RoundTripper // tr is the underlying roundtripper being wrapped
-	key            *rsa.PrivateKey   // key is the GitHub Integration's private key
 	integrationID  int               // integrationID is the GitHub Integration's Installation ID
 	installationID int               // installationID is the GitHub Integration's Installation ID
+	appsTransport  *AppsTransport
 
 	mu    *sync.Mutex  // mu protects token
 	token *accessToken // token is the installation's access token
@@ -79,9 +75,9 @@ func New(tr http.RoundTripper, integrationID, installationID int, privateKey []b
 		mu:             &sync.Mutex{},
 	}
 	var err error
-	t.key, err = jwt.ParseRSAPrivateKeyFromPEM(privateKey)
+	t.appsTransport, err = NewAppsTransport(t.tr, t.integrationID, privateKey)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse private key: %s", err)
+		return nil, err
 	}
 	return t, nil
 }
@@ -115,27 +111,14 @@ func (t *Transport) Token() (string, error) {
 }
 
 func (t *Transport) refreshToken() error {
-	// TODO these claims could probably be reused between installations before expiry
-	claims := &jwt.StandardClaims{
-		IssuedAt:  time.Now().Unix(),
-		ExpiresAt: time.Now().Add(time.Minute).Unix(),
-		Issuer:    strconv.Itoa(t.integrationID),
-	}
-	bearer := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-
-	ss, err := bearer.SignedString(t.key)
-	if err != nil {
-		return fmt.Errorf("could not sign jwt: %s", err)
-	}
-
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/installations/%v/access_tokens", t.BaseURL, t.installationID), nil)
 	if err != nil {
 		return fmt.Errorf("could not create request: %s", err)
 	}
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %v", ss))
-	req.Header.Set("Accept", acceptHeader)
 
-	resp, err := t.Client.Do(req)
+	t.appsTransport.BaseURL = t.BaseURL
+	t.appsTransport.Client = t.Client
+	resp, err := t.appsTransport.RoundTrip(req)
 	if err != nil {
 		return fmt.Errorf("could not get access_tokens from GitHub API for installation ID %v: %v", t.installationID, err)
 	}
