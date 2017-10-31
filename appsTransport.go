@@ -3,6 +3,7 @@ package ghinstallation
 import (
 	"crypto/rsa"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
@@ -10,6 +11,14 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
+// AppsTransport provides a http.RoundTripper by wrapping an existing
+// http.RoundTripper and provides GitHub Apps authentication as a
+// GitHub App.
+//
+// Client can also be overwritten, and is useful to change to one which
+// provides retry logic if you do experience retryable errors.
+//
+// See https://developer.github.com/apps/building-integrations/setting-up-and-registering-github-apps/about-authentication-options-for-github-apps/
 type AppsTransport struct {
 	BaseURL       string            // baseURL is the scheme and host for GitHub API, defaults to https://api.github.com
 	Client        Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
@@ -18,6 +27,22 @@ type AppsTransport struct {
 	integrationID int               // integrationID is the GitHub Integration's Installation ID
 }
 
+// NewAppsTransportKeyFromFile returns a AppsTransport using a private key from file.
+func NewAppsTransportKeyFromFile(tr http.RoundTripper, integrationID int, privateKeyFile string) (*AppsTransport, error) {
+	privateKey, err := ioutil.ReadFile(privateKeyFile)
+	if err != nil {
+		return nil, fmt.Errorf("could not read private key: %s", err)
+	}
+	return NewAppsTransport(tr, integrationID, privateKey)
+}
+
+// NewAppsTransport returns a AppsTransport using private key. The key is parsed
+// and if any errors occur the error is non-nil.
+//
+// The provided tr http.RoundTripper should be shared between multiple
+// installations to ensure reuse of underlying TCP connections.
+//
+// The returned Transport's RoundTrip method is safe to be used concurrently.
 func NewAppsTransport(tr http.RoundTripper, integrationID int, privateKey []byte) (*AppsTransport, error) {
 	t := &AppsTransport{
 		tr:            tr,
@@ -35,10 +60,6 @@ func NewAppsTransport(tr http.RoundTripper, integrationID int, privateKey []byte
 
 // RoundTrip implements http.RoundTripper interface.
 func (t *AppsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-
-	// TODO check expiry
-
-	// TODO these claims could probably be reused between installations before expiry
 	claims := &jwt.StandardClaims{
 		IssuedAt:  time.Now().Unix(),
 		ExpiresAt: time.Now().Add(time.Minute).Unix(),

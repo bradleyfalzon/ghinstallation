@@ -16,7 +16,7 @@ const (
 )
 
 // Transport provides a http.RoundTripper by wrapping an existing
-// http.RoundTripper and provides GitHub Integration authentication as an
+// http.RoundTripper and provides GitHub Apps authentication as an
 // installation.
 //
 // Client can also be overwritten, and is useful to change to one which
@@ -43,7 +43,7 @@ type accessToken struct {
 
 var _ http.RoundTripper = &Transport{}
 
-// NewKeyFromFile returns an Transport using a private key from file.
+// NewKeyFromFile returns a Transport using a private key from file.
 func NewKeyFromFile(tr http.RoundTripper, integrationID, installationID int, privateKeyFile string) (*Transport, error) {
 	privateKey, err := ioutil.ReadFile(privateKeyFile)
 	if err != nil {
@@ -59,7 +59,7 @@ type Client interface {
 }
 
 // New returns an Transport using private key. The key is parsed
-// and if any errors occur the transport is nil and error is non-nil.
+// and if any errors occur the error is non-nil.
 //
 // The provided tr http.RoundTripper should be shared between multiple
 // installations to ensure reuse of underlying TCP connections.
