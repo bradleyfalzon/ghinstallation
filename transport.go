@@ -24,7 +24,7 @@ const (
 //
 // See https://developer.github.com/apps/building-integrations/setting-up-and-registering-github-apps/about-authentication-options-for-github-apps/
 type Transport struct {
-	BaseURL        string            // baseURL is the scheme and host for GitHub API, defaults to https://api.github.com
+	BaseURL        string            // BaseURL is the scheme and host for GitHub API, defaults to https://api.github.com
 	Client         Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
 	tr             http.RoundTripper // tr is the underlying roundtripper being wrapped
 	integrationID  int               // integrationID is the GitHub Integration's Installation ID
