@@ -1,6 +1,7 @@
 package ghinstallation
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -26,6 +27,7 @@ const (
 type Transport struct {
 	BaseURL        string            // baseURL is the scheme and host for GitHub API, defaults to https://api.github.com
 	Client         Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
+	Context        context.Context   // Context is the request context, defaults to the background context
 	tr             http.RoundTripper // tr is the underlying roundtripper being wrapped
 	integrationID  int               // integrationID is the GitHub Integration's Installation ID
 	installationID int               // installationID is the GitHub Integration's Installation ID
@@ -72,6 +74,7 @@ func New(tr http.RoundTripper, integrationID, installationID int, privateKey []b
 		installationID: installationID,
 		BaseURL:        apiBaseURL,
 		Client:         &http.Client{Transport: tr},
+		Context:        context.Background(),
 		mu:             &sync.Mutex{},
 	}
 	var err error
@@ -91,7 +94,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	req.Header.Set("Authorization", "token "+token)
 	req.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
-	resp, err := t.tr.RoundTrip(req)
+	resp, err := t.tr.RoundTrip(req.WithContext(t.Context))
 	return resp, err
 }
 
@@ -118,7 +121,7 @@ func (t *Transport) refreshToken() error {
 
 	t.appsTransport.BaseURL = t.BaseURL
 	t.appsTransport.Client = t.Client
-	resp, err := t.appsTransport.RoundTrip(req)
+	resp, err := t.appsTransport.RoundTrip(req.WithContext(t.Context))
 	if err != nil {
 		return fmt.Errorf("could not get access_tokens from GitHub API for installation ID %v: %v", t.installationID, err)
 	}

@@ -1,6 +1,7 @@
 package ghinstallation
 
 import (
+	"context"
 	"crypto/rsa"
 	"fmt"
 	"io/ioutil"
@@ -22,6 +23,7 @@ import (
 type AppsTransport struct {
 	BaseURL       string            // baseURL is the scheme and host for GitHub API, defaults to https://api.github.com
 	Client        Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
+	Context       context.Context   // Context is the request context, defaults to the background context
 	tr            http.RoundTripper // tr is the underlying roundtripper being wrapped
 	key           *rsa.PrivateKey   // key is the GitHub Integration's private key
 	integrationID int               // integrationID is the GitHub Integration's Installation ID
@@ -49,6 +51,7 @@ func NewAppsTransport(tr http.RoundTripper, integrationID int, privateKey []byte
 		integrationID: integrationID,
 		BaseURL:       apiBaseURL,
 		Client:        &http.Client{Transport: tr},
+		Context:       context.Background(),
 	}
 	var err error
 	t.key, err = jwt.ParseRSAPrivateKeyFromPEM(privateKey)
@@ -75,6 +78,6 @@ func (t *AppsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.Header.Set("Authorization", "Bearer "+ss)
 	req.Header.Set("Accept", acceptHeader)
 
-	resp, err := t.tr.RoundTrip(req)
+	resp, err := t.tr.RoundTrip(req.WithContext(t.Context))
 	return resp, err
 }
