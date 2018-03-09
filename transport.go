@@ -128,9 +128,5 @@ func (t *Transport) refreshToken() error {
 		return fmt.Errorf("received non 2xx response status %q when fetching %v", resp.Status, req.URL)
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&t.token); err != nil {
-		return err
-	}
-
-	return nil
+	return json.NewDecoder(resp.Body).Decode(&t.token)
 }
