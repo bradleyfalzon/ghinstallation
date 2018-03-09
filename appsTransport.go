@@ -29,11 +29,29 @@ type AppsTransport struct {
 
 // NewAppsTransportKeyFromFile returns a AppsTransport using a private key from file.
 func NewAppsTransportKeyFromFile(tr http.RoundTripper, integrationID int, privateKeyFile string) (*AppsTransport, error) {
+	return newAppsTransportKeyFromFile(apiBaseURL, tr, integrationID, privateKeyFile)
+}
+
+// NewEnterpriseAppsTransportKeyFromFile returns a AppsTransport using a customer base URL and a private key from file.
+func NewEnterpriseAppsTransportKeyFromFile(baseURL string, tr http.RoundTripper, integrationID int, privateKeyFile string) (*AppsTransport, error) {
+	return newAppsTransportKeyFromFile(baseURL, tr, integrationID, privateKeyFile)
+}
+
+func newAppsTransportKeyFromFile(baseURL string, tr http.RoundTripper, integrationID int, privateKeyFile string) (*AppsTransport, error) {
 	privateKey, err := ioutil.ReadFile(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read private key: %s", err)
 	}
-	return NewAppsTransport(tr, integrationID, privateKey)
+
+  var t *AppsTransport
+
+  if baseURL == apiBaseURL {
+    t, err = NewAppsTransport(tr, integrationID, privateKey)
+  } else {
+    t, err = NewEnterpriseAppsTransport(baseURL, tr, integrationID, privateKey)
+  }
+
+	return t, err
 }
 
 // NewAppsTransport returns a AppsTransport using private key. The key is parsed
@@ -44,10 +62,19 @@ func NewAppsTransportKeyFromFile(tr http.RoundTripper, integrationID int, privat
 //
 // The returned Transport's RoundTrip method is safe to be used concurrently.
 func NewAppsTransport(tr http.RoundTripper, integrationID int, privateKey []byte) (*AppsTransport, error) {
+  return newAppsTransport(apiBaseURL, tr, integrationID, privateKey)
+}
+
+// NewEnterpriseTransport returns a AppsTransport using a custom base URL and private key.
+func NewEnterpriseAppsTransport(baseURL string, tr http.RoundTripper, integrationID int, privateKey []byte) (*AppsTransport, error) {
+  return newAppsTransport(baseURL, tr, integrationID, privateKey)
+}
+
+func newAppsTransport(baseURL string, tr http.RoundTripper, integrationID int, privateKey []byte) (*AppsTransport, error) {
 	t := &AppsTransport{
 		tr:            tr,
 		integrationID: integrationID,
-		BaseURL:       apiBaseURL,
+		BaseURL:       baseURL,
 		Client:        &http.Client{Transport: tr},
 	}
 	var err error
