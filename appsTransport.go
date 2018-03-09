@@ -29,11 +29,28 @@ type AppsTransport struct {
 
 // NewAppsTransportKeyFromFile returns a AppsTransport using a private key from file.
 func NewAppsTransportKeyFromFile(tr http.RoundTripper, integrationID int, privateKeyFile string) (*AppsTransport, error) {
+	return newAppsTransportKeyFromFile(apiBaseURL, tr, integrationID, privateKeyFile)
+}
+
+func NewEnterpriseAppsTransportKeyFromFile(baseUrl string, tr http.RoundTripper, integrationID int, privateKeyFile string) (*AppsTransport, error) {
+	return newAppsTransportKeyFromFile(baseUrl, tr, integrationID, privateKeyFile)
+}
+
+func newAppsTransportKeyFromFile(baseUrl string, tr http.RoundTripper, integrationID int, privateKeyFile string) (*AppsTransport, error) {
 	privateKey, err := ioutil.ReadFile(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read private key: %s", err)
 	}
-	return NewAppsTransport(tr, integrationID, privateKey)
+
+  var t *AppsTransport
+
+  if baseUrl == apiBaseURL {
+    t, err = NewAppsTransport(tr, integrationID, privateKey)
+  } else {
+    t, err = NewEnterpriseAppsTransport(baseUrl, tr, integrationID, privateKey)
+  }
+
+	return t, err
 }
 
 // NewAppsTransport returns a AppsTransport using private key. The key is parsed
