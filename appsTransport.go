@@ -44,10 +44,18 @@ func NewAppsTransportKeyFromFile(tr http.RoundTripper, integrationID int, privat
 //
 // The returned Transport's RoundTrip method is safe to be used concurrently.
 func NewAppsTransport(tr http.RoundTripper, integrationID int, privateKey []byte) (*AppsTransport, error) {
+  return newAppsTransport(apiBaseURL, tr, integrationID, privateKey)
+}
+
+func NewEnterpriseAppsTransport(baseUrl string, tr http.RoundTripper, integrationID int, privateKey []byte) (*AppsTransport, error) {
+  return newAppsTransport(baseUrl, tr, integrationID, privateKey)
+}
+
+func newAppsTransport(baseUrl string, tr http.RoundTripper, integrationID int, privateKey []byte) (*AppsTransport, error) {
 	t := &AppsTransport{
 		tr:            tr,
 		integrationID: integrationID,
-		BaseURL:       apiBaseURL,
+		BaseURL:       baseUrl,
 		Client:        &http.Client{Transport: tr},
 	}
 	var err error
