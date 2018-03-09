@@ -32,6 +32,7 @@ func NewAppsTransportKeyFromFile(tr http.RoundTripper, integrationID int, privat
 	return newAppsTransportKeyFromFile(apiBaseURL, tr, integrationID, privateKeyFile)
 }
 
+// NewEnterpriseAppsTransportKeyFromFile returns a AppsTransport using a customer base URL and a private key from file.
 func NewEnterpriseAppsTransportKeyFromFile(baseURL string, tr http.RoundTripper, integrationID int, privateKeyFile string) (*AppsTransport, error) {
 	return newAppsTransportKeyFromFile(baseURL, tr, integrationID, privateKeyFile)
 }
@@ -64,6 +65,7 @@ func NewAppsTransport(tr http.RoundTripper, integrationID int, privateKey []byte
   return newAppsTransport(apiBaseURL, tr, integrationID, privateKey)
 }
 
+// NewEnterpriseTransport returns a AppsTransport using a custom base URL and private key.
 func NewEnterpriseAppsTransport(baseURL string, tr http.RoundTripper, integrationID int, privateKey []byte) (*AppsTransport, error) {
   return newAppsTransport(baseURL, tr, integrationID, privateKey)
 }
