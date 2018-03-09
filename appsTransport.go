@@ -32,11 +32,11 @@ func NewAppsTransportKeyFromFile(tr http.RoundTripper, integrationID int, privat
 	return newAppsTransportKeyFromFile(apiBaseURL, tr, integrationID, privateKeyFile)
 }
 
-func NewEnterpriseAppsTransportKeyFromFile(baseUrl string, tr http.RoundTripper, integrationID int, privateKeyFile string) (*AppsTransport, error) {
-	return newAppsTransportKeyFromFile(baseUrl, tr, integrationID, privateKeyFile)
+func NewEnterpriseAppsTransportKeyFromFile(baseURL string, tr http.RoundTripper, integrationID int, privateKeyFile string) (*AppsTransport, error) {
+	return newAppsTransportKeyFromFile(baseURL, tr, integrationID, privateKeyFile)
 }
 
-func newAppsTransportKeyFromFile(baseUrl string, tr http.RoundTripper, integrationID int, privateKeyFile string) (*AppsTransport, error) {
+func newAppsTransportKeyFromFile(baseURL string, tr http.RoundTripper, integrationID int, privateKeyFile string) (*AppsTransport, error) {
 	privateKey, err := ioutil.ReadFile(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read private key: %s", err)
@@ -44,10 +44,10 @@ func newAppsTransportKeyFromFile(baseUrl string, tr http.RoundTripper, integrati
 
   var t *AppsTransport
 
-  if baseUrl == apiBaseURL {
+  if baseURL == apiBaseURL {
     t, err = NewAppsTransport(tr, integrationID, privateKey)
   } else {
-    t, err = NewEnterpriseAppsTransport(baseUrl, tr, integrationID, privateKey)
+    t, err = NewEnterpriseAppsTransport(baseURL, tr, integrationID, privateKey)
   }
 
 	return t, err
@@ -64,15 +64,15 @@ func NewAppsTransport(tr http.RoundTripper, integrationID int, privateKey []byte
   return newAppsTransport(apiBaseURL, tr, integrationID, privateKey)
 }
 
-func NewEnterpriseAppsTransport(baseUrl string, tr http.RoundTripper, integrationID int, privateKey []byte) (*AppsTransport, error) {
-  return newAppsTransport(baseUrl, tr, integrationID, privateKey)
+func NewEnterpriseAppsTransport(baseURL string, tr http.RoundTripper, integrationID int, privateKey []byte) (*AppsTransport, error) {
+  return newAppsTransport(baseURL, tr, integrationID, privateKey)
 }
 
-func newAppsTransport(baseUrl string, tr http.RoundTripper, integrationID int, privateKey []byte) (*AppsTransport, error) {
+func newAppsTransport(baseURL string, tr http.RoundTripper, integrationID int, privateKey []byte) (*AppsTransport, error) {
 	t := &AppsTransport{
 		tr:            tr,
 		integrationID: integrationID,
-		BaseURL:       baseUrl,
+		BaseURL:       baseURL,
 		Client:        &http.Client{Transport: tr},
 	}
 	var err error
