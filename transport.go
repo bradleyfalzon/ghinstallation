@@ -1,6 +1,7 @@
 package ghinstallation
 
 import (
+	"strings"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -141,7 +142,7 @@ func addAcceptHeader(req *http.Request) {
 	if req.Header.Get("Accept") != "" {
 		//Need to loop through all Accept headers incase there is more than one.
 		for headerName, headers := range req.Header {
-			if headerName == "Accept" {
+			if strings.ToLower(headerName) == "accept" {
 				for _, header := range headers {
 					if header == defaultMediaType {
 						//Do not add any other Accept header if 'application/octet-stream' is present. More than one will prevent a download API call from succeeding
