@@ -11,8 +11,9 @@ import (
 
 const (
 	// acceptHeader is the GitHub Integrations Preview Accept header.
-	acceptHeader = "application/vnd.github.machine-man-preview+json"
-	apiBaseURL   = "https://api.github.com"
+	acceptHeader     = "application/vnd.github.machine-man-preview+json"
+	defaultMediaType = "application/octet-stream"
+	apiBaseURL       = "https://api.github.com"
 )
 
 // Transport provides a http.RoundTripper by wrapping an existing
@@ -90,7 +91,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	req.Header.Set("Authorization", "token "+token)
-	req.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
+	addAcceptHeader(req)
 	resp, err := t.tr.RoundTrip(req)
 	return resp, err
 }
@@ -133,4 +134,23 @@ func (t *Transport) refreshToken() error {
 	}
 
 	return nil
+}
+
+func addAcceptHeader(req *http.Request) {
+
+	if req.Header.Get("Accept") != "" {
+		//Need to loop through all Accept headers incase there is more than one.
+		for headerName, headers := range req.Header {
+			if headerName == "Accept" {
+				for _, header := range headers {
+					if header == defaultMediaType {
+						//Do not add any other Accept header if 'application/octet-stream' is present. More than one will prevent a download API call from succeeding
+						return
+					}
+				}
+			}
+		}
+	}
+
+	req.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
 }
