@@ -1,11 +1,11 @@
 package ghinstallation
 
 import (
-	"strings"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 )
