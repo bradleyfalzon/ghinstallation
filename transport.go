@@ -18,7 +18,7 @@ const (
 )
 
 //Used to detect if a single asset request is being made. https://developer.github.com/v3/repos/releases/#get-a-single-release-asset
-var assetPathRegex = regexp.MustCompile("/repos/.+/.+/releases/assets/\\d+")
+var assetPathRegex = regexp.MustCompile("/repos/.+/.+/releases/assets/[0-9]+")
 
 // Transport provides a http.RoundTripper by wrapping an existing
 // http.RoundTripper and provides GitHub Apps authentication as an
