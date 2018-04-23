@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
+	"regexp"
 	"sync"
 	"time"
 )
@@ -16,6 +16,9 @@ const (
 	defaultMediaType = "application/octet-stream"
 	apiBaseURL       = "https://api.github.com"
 )
+
+//Used to detect if a single asset request is being made. https://developer.github.com/v3/repos/releases/#get-a-single-release-asset
+var assetPathRegex = regexp.MustCompile("/repos/.+/.+/releases/assets/\\d+")
 
 // Transport provides a http.RoundTripper by wrapping an existing
 // http.RoundTripper and provides GitHub Apps authentication as an
@@ -138,20 +141,13 @@ func (t *Transport) refreshToken() error {
 }
 
 func addAcceptHeader(req *http.Request) {
-
-	if req.Header.Get("Accept") != "" {
-		//Need to loop through all Accept headers incase there is more than one.
-		for headerName, headers := range req.Header {
-			if strings.ToLower(headerName) == "accept" {
-				for _, header := range headers {
-					if header == defaultMediaType {
-						//Do not add any other Accept header if 'application/octet-stream' is present. More than one will prevent a download API call from succeeding
-						return
-					}
-				}
-			}
+	//Check to see if we're making a single asset GET request
+	fmt.Println(req.URL.Path)
+	if req.Method == http.MethodGet && assetPathRegex.MatchString(req.URL.Path) {
+		if req.Header.Get("Accept") != defaultMediaType {
+			req.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
 		}
+	} else {
+		req.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
 	}
-
-	req.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
 }

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -171,5 +172,53 @@ func TestNew_appendHeader(t *testing.T) {
 
 	if !found {
 		t.Errorf("could not find %v in request's accept headers: %v", myheader, headers["Accept"])
+	}
+}
+
+func TestSingleAssetBinary_AddAcceptHeader(t *testing.T) {
+	req, err := http.NewRequest(http.MethodGet, "https://api.github.com/repos/bradleyfalzon/ghinstallation/releases/assets/1", http.NoBody)
+	if err != nil {
+		t.Fatalf("Failed to create test request: %s", err.Error())
+	}
+
+	req.Header.Set("Accept", defaultMediaType)
+
+	addAcceptHeader(req)
+
+	for headerName, headers := range req.Header {
+		if strings.ToLower(headerName) == "accept" {
+			for _, header := range headers {
+				if header == acceptHeader {
+					fmt.Printf("Header Name: %s, Header: %s", headerName, header)
+					t.Error("Set Accept header improperly for single asset call")
+				}
+			}
+		}
+	}
+}
+
+func TestNormal_AddAcceptHeader(t *testing.T) {
+	req, err := http.NewRequest(http.MethodGet, "https://api.github.com/repos", http.NoBody)
+	if err != nil {
+		t.Fatalf("Failed to create test request: %s", err.Error())
+	}
+
+	addAcceptHeader(req)
+
+	if req.Header.Get("Accept") != acceptHeader {
+		t.Error("Did not correctly set 'Accept' header")
+	}
+}
+
+func TestSingleAssetJSON_AddAcceptHeader(t *testing.T) {
+	req, err := http.NewRequest(http.MethodGet, "https://api.github.com/repos/bradleyfalzon/ghinstallation/releases/assets/1", http.NoBody)
+	if err != nil {
+		t.Fatalf("Failed to create test request: %s", err.Error())
+	}
+
+	addAcceptHeader(req)
+
+	if req.Header.Get("Accept") != acceptHeader {
+		t.Error("Did not correctly set 'Accept' header")
 	}
 }
