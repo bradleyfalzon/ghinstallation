@@ -142,7 +142,6 @@ func (t *Transport) refreshToken() error {
 
 func addAcceptHeader(req *http.Request) {
 	//Check to see if we're making a single asset GET request
-	fmt.Println(req.URL.Path)
 	if req.Method == http.MethodGet && assetPathRegex.MatchString(req.URL.Path) {
 		if req.Header.Get("Accept") != defaultMediaType {
 			req.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
