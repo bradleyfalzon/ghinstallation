@@ -181,7 +181,7 @@ func TestSingleAssetBinary_AddAcceptHeader(t *testing.T) {
 		t.Fatalf("Failed to create test request: %s", err.Error())
 	}
 
-	req.Header.Set("Accept", defaultMediaType)
+	req.Header.Set("Accept", "application/octet-stream")
 
 	addAcceptHeader(req)
 
@@ -207,6 +207,33 @@ func TestNormal_AddAcceptHeader(t *testing.T) {
 
 	if req.Header.Get("Accept") != acceptHeader {
 		t.Error("Did not correctly set 'Accept' header")
+	}
+}
+
+func TestAlreadyExists_AddAcceptHeader(t *testing.T) {
+	req, err := http.NewRequest(http.MethodGet, "https://api.github.com/repos", http.NoBody)
+	if err != nil {
+		t.Fatalf("Failed to create test request: %s", err.Error())
+	}
+
+	req.Header.Set("Accept", "application/vnd.github.v3+json")
+
+	addAcceptHeader(req)
+
+	found := false
+	for headerName, headers := range req.Header {
+		if strings.ToLower(headerName) == "accept" {
+			for _, header := range headers {
+				if header == acceptHeader {
+					found = true
+					break
+				}
+			}
+		}
+	}
+
+	if !found {
+		t.Errorf("Did not correctly append %s header", acceptHeader)
 	}
 }
 

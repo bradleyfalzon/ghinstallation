@@ -5,20 +5,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"regexp"
+	"strings"
 	"sync"
 	"time"
 )
 
 const (
 	// acceptHeader is the GitHub Integrations Preview Accept header.
-	acceptHeader     = "application/vnd.github.machine-man-preview+json"
-	defaultMediaType = "application/octet-stream"
-	apiBaseURL       = "https://api.github.com"
+	acceptHeader = "application/vnd.github.machine-man-preview+json"
+	apiBaseURL   = "https://api.github.com"
 )
-
-//Used to detect if a single asset request is being made. https://developer.github.com/v3/repos/releases/#get-a-single-release-asset
-var assetPathRegex = regexp.MustCompile("/repos/.+/.+/releases/assets/[0-9]+")
 
 // Transport provides a http.RoundTripper by wrapping an existing
 // http.RoundTripper and provides GitHub Apps authentication as an
@@ -141,10 +137,18 @@ func (t *Transport) refreshToken() error {
 }
 
 func addAcceptHeader(req *http.Request) {
-	//Check to see if we're making a single asset GET request
-	if req.Method == http.MethodGet && assetPathRegex.MatchString(req.URL.Path) {
-		if req.Header.Get("Accept") != defaultMediaType {
-			req.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
+	if req.Header.Get("Accept") != "" {
+		//Need to loop through all Accept headers incase there is more than one.
+		for headerName, headers := range req.Header {
+			if strings.ToLower(headerName) == "accept" {
+				for _, header := range headers {
+					//Looks as though all media types (https://developer.github.com/v3/media/) that can accept json end with "json". Only doing a suffix check to see if a json header already exists.
+					if strings.HasSuffix(header, "json") {
+						req.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
+						return
+					}
+				}
+			}
 		}
 	} else {
 		req.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
