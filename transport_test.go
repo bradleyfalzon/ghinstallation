@@ -183,7 +183,7 @@ func TestSingleAssetBinary_AddAcceptHeader(t *testing.T) {
 
 	req.Header.Set("Accept", "application/octet-stream")
 
-	addAcceptHeader(req)
+	addAcceptHeader(req.Header)
 
 	for headerName, headers := range req.Header {
 		if strings.ToLower(headerName) == "accept" {
@@ -203,7 +203,7 @@ func TestNormal_AddAcceptHeader(t *testing.T) {
 		t.Fatalf("Failed to create test request: %s", err.Error())
 	}
 
-	addAcceptHeader(req)
+	addAcceptHeader(req.Header)
 
 	if req.Header.Get("Accept") != acceptHeader {
 		t.Error("Did not correctly set 'Accept' header")
@@ -216,9 +216,9 @@ func TestAlreadyExists_AddAcceptHeader(t *testing.T) {
 		t.Fatalf("Failed to create test request: %s", err.Error())
 	}
 
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
+	req.Header.Set("accept", "application/vnd.github.v3+json")
 
-	addAcceptHeader(req)
+	addAcceptHeader(req.Header)
 
 	found := false
 	for headerName, headers := range req.Header {
@@ -243,7 +243,7 @@ func TestSingleAssetJSON_AddAcceptHeader(t *testing.T) {
 		t.Fatalf("Failed to create test request: %s", err.Error())
 	}
 
-	addAcceptHeader(req)
+	addAcceptHeader(req.Header)
 
 	if req.Header.Get("Accept") != acceptHeader {
 		t.Error("Did not correctly set 'Accept' header")

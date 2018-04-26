@@ -91,7 +91,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	}
 
 	req.Header.Set("Authorization", "token "+token)
-	addAcceptHeader(req)
+	addAcceptHeader(req.Header)
 	resp, err := t.tr.RoundTrip(req)
 	return resp, err
 }
@@ -136,21 +136,18 @@ func (t *Transport) refreshToken() error {
 	return nil
 }
 
-func addAcceptHeader(req *http.Request) {
-	if req.Header.Get("Accept") != "" {
-		//Need to loop through all Accept headers incase there is more than one.
-		for headerName, headers := range req.Header {
-			if strings.ToLower(headerName) == "accept" {
-				for _, header := range headers {
-					//Looks as though all media types (https://developer.github.com/v3/media/) that can accept json end with "json". Only doing a suffix check to see if a json header already exists.
-					if strings.HasSuffix(header, "json") {
-						req.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
-						return
-					}
-				}
-			}
+func addAcceptHeader(headers http.Header) {
+	if headers.Get("Accept") == "" {
+		headers.Set("Accept", acceptHeader)
+		return
+	}
+
+	//Need to loop through all Accept headers incase there is more than one.
+	for _, header := range headers["Accept"] {
+		//Looks as though all media types (https://developer.github.com/v3/media/) that can accept json end with "json". Only doing a suffix check to see if a json header already exists.
+		if strings.HasSuffix(header, "json") {
+			headers.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
+			return
 		}
-	} else {
-		req.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
 	}
 }
