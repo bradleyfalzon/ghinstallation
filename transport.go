@@ -1,6 +1,7 @@
 package ghinstallation
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -24,7 +25,7 @@ const (
 //
 // See https://developer.github.com/apps/building-integrations/setting-up-and-registering-github-apps/about-authentication-options-for-github-apps/
 type Transport struct {
-	BaseURL        string            // baseURL is the scheme and host for GitHub API, defaults to https://api.github.com
+	BaseURL        string            // BaseURL is the scheme and host for GitHub API, defaults to https://api.github.com
 	Client         Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
 	tr             http.RoundTripper // tr is the underlying roundtripper being wrapped
 	integrationID  int               // integrationID is the GitHub Integration's Installation ID
@@ -84,7 +85,7 @@ func New(tr http.RoundTripper, integrationID, installationID int, privateKey []b
 
 // RoundTrip implements http.RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	token, err := t.Token()
+	token, err := t.TokenWithContext(req.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -95,14 +96,15 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
-// Token checks the active token expiration and renews if necessary. Token returns
+// TokenWithContext is the same as Token with the ability to pass a Context.
+// Checks the active token expiration and renews if necessary. Returns
 // a valid access token. If renewal fails an error is returned.
-func (t *Transport) Token() (string, error) {
+func (t *Transport) TokenWithContext(ctx context.Context) (string, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.token == nil || t.token.ExpiresAt.Add(-time.Minute).Before(time.Now()) {
 		// Token is not set or expired/nearly expired, so refresh
-		if err := t.refreshToken(); err != nil {
+		if err := t.refreshToken(ctx); err != nil {
 			return "", fmt.Errorf("could not refresh installation id %v's token: %s", t.installationID, err)
 		}
 	}
@@ -110,12 +112,18 @@ func (t *Transport) Token() (string, error) {
 	return t.token.Token, nil
 }
 
-func (t *Transport) refreshToken() error {
+// Token checks the active token expiration and renews if necessary. Token returns
+// a valid access token. If renewal fails an error is returned.
+func (t *Transport) Token() (string, error) {
+	return t.TokenWithContext(context.Background())
+}
+
+func (t *Transport) refreshToken(ctx context.Context) error {
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/installations/%v/access_tokens", t.BaseURL, t.installationID), nil)
 	if err != nil {
 		return fmt.Errorf("could not create request: %s", err)
 	}
-
+	req = req.WithContext(ctx)
 	t.appsTransport.BaseURL = t.BaseURL
 	t.appsTransport.Client = t.Client
 	resp, err := t.appsTransport.RoundTrip(req)
