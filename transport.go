@@ -136,6 +136,8 @@ func (t *Transport) refreshToken() error {
 	return nil
 }
 
+// addAcceptHeader adds acceptHeader value to "Accept" header, but only
+// if the current "Accept" header is not set, or if it already accepts JSON.
 func addAcceptHeader(headers http.Header) {
 	if headers.Get("Accept") == "" {
 		headers.Set("Accept", acceptHeader)
