@@ -144,10 +144,10 @@ func addAcceptHeader(headers http.Header) {
 		return
 	}
 
-	//Need to loop through all Accept headers in case there is more than one.
+	// Need to loop through all Accept headers in case there is more than one.
 	for _, header := range headers["Accept"] {
-		//Looks as though all media types (https://developer.github.com/v3/media/) that can accept json end with "json". 
-		//Only doing a suffix check to see if a json header already exists.
+		// Looks as though all media types (https://developer.github.com/v3/media/) that can accept json end with "json". 
+		// Only doing a suffix check to see if a json header already exists.
 		if strings.HasSuffix(header, "json") {
 			headers.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
 			return
