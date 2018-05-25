@@ -85,7 +85,7 @@ func New(tr http.RoundTripper, integrationID, installationID int, privateKey []b
 
 // RoundTrip implements http.RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	token, err := t.TokenWithContext(req.Context())
+	token, err := t.Token(req.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -96,10 +96,10 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
-// TokenWithContext is the same as Token with the ability to pass a Context.
-// Checks the active token expiration and renews if necessary. Returns
+// Token checks the active token expiration and renews if necessary. Token returns
 // a valid access token. If renewal fails an error is returned.
-func (t *Transport) TokenWithContext(ctx context.Context) (string, error) {
+// If the context is non-nil it is passed along to outgoing http requests.
+func (t *Transport) Token(ctx context.Context) (string, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.token == nil || t.token.ExpiresAt.Add(-time.Minute).Before(time.Now()) {
@@ -112,18 +112,14 @@ func (t *Transport) TokenWithContext(ctx context.Context) (string, error) {
 	return t.token.Token, nil
 }
 
-// Token checks the active token expiration and renews if necessary. Token returns
-// a valid access token. If renewal fails an error is returned.
-func (t *Transport) Token() (string, error) {
-	return t.TokenWithContext(context.Background())
-}
-
 func (t *Transport) refreshToken(ctx context.Context) error {
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/installations/%v/access_tokens", t.BaseURL, t.installationID), nil)
 	if err != nil {
 		return fmt.Errorf("could not create request: %s", err)
 	}
-	req = req.WithContext(ctx)
+	if ctx != nil {
+		req = req.WithContext(ctx)
+	}
 	t.appsTransport.BaseURL = t.BaseURL
 	t.appsTransport.Client = t.Client
 	resp, err := t.appsTransport.RoundTrip(req)
