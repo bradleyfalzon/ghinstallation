@@ -38,6 +38,24 @@ func main() {
 }
 ```
 
+## What is integration ID and installation ID
+`integration ID` is GitHub App ID.  
+You can check as following :  
+Settings > Developer > settings > GitHub App > About item 
+
+`installation ID` is a part of WebHook request.  
+You can get the number to check the request.  
+Settings > Developer > settings > GitHub Apps > Advanced > Payload in Request tab
+
+```
+WebHook request
+...
+  "installation": {
+    "id": `installation ID`
+  }
+```
+
+
 # License
 
 [Unlicense](LICENSE) - feel free to copy/paste without attribution/preservation of license etc.
