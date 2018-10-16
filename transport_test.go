@@ -173,3 +173,16 @@ func TestNew_appendHeader(t *testing.T) {
 		t.Errorf("could not find %v in request's accept headers: %v", myheader, headers["Accept"])
 	}
 }
+
+func TestWithEnterpriseGithub(t *testing.T) {
+	enterpriseGithub := "https://github.company.com/api/v3"
+	tr, err := New(&http.Transport{}, integrationID, installationID, key, WithEnterpriseGithub(enterpriseGithub))
+	if err != nil {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	if tr.BaseURL != enterpriseGithub {
+		t.Fatalf("unexpected github base URL. Expected %s, got %s", enterpriseGithub, tr.BaseURL)
+	}
+}
+
