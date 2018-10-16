@@ -44,12 +44,12 @@ type accessToken struct {
 var _ http.RoundTripper = &Transport{}
 
 // NewKeyFromFile returns a Transport using a private key from file.
-func NewKeyFromFile(tr http.RoundTripper, integrationID, installationID int, privateKeyFile string) (*Transport, error) {
+func NewKeyFromFile(tr http.RoundTripper, integrationID, installationID int, privateKeyFile string, opts ...Option) (*Transport, error) {
 	privateKey, err := ioutil.ReadFile(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read private key: %s", err)
 	}
-	return New(tr, integrationID, installationID, privateKey)
+	return New(tr, integrationID, installationID, privateKey, opts...)
 }
 
 // Client is a HTTP client which sends a http.Request and returns a http.Response
@@ -65,7 +65,7 @@ type Client interface {
 // installations to ensure reuse of underlying TCP connections.
 //
 // The returned Transport's RoundTrip method is safe to be used concurrently.
-func New(tr http.RoundTripper, integrationID, installationID int, privateKey []byte) (*Transport, error) {
+func New(tr http.RoundTripper, integrationID, installationID int, privateKey []byte, opts ...Option) (*Transport, error) {
 	t := &Transport{
 		tr:             tr,
 		integrationID:  integrationID,
@@ -74,6 +74,17 @@ func New(tr http.RoundTripper, integrationID, installationID int, privateKey []b
 		Client:         &http.Client{Transport: tr},
 		mu:             &sync.Mutex{},
 	}
+
+	// Apply the functional parameters
+	for _, opt := range opts {
+		if opt != nil {
+			err := opt(t)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
+
 	var err error
 	t.appsTransport, err = NewAppsTransport(t.tr, t.integrationID, privateKey)
 	if err != nil {
