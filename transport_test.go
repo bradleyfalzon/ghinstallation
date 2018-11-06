@@ -53,7 +53,7 @@ func TestNew(t *testing.T) {
 			t.Fatalf("Request URI %q accept header got %q want: %q", r.RequestURI, r.Header.Get("Accept"), acceptHeader)
 		}
 		switch r.RequestURI {
-		case fmt.Sprintf("/installations/%d/access_tokens", installationID):
+		case fmt.Sprintf("/app/installations/%d/access_tokens", installationID):
 			// respond with any token to installation transport
 			js, _ := json.Marshal(accessToken{
 				Token:     token,
