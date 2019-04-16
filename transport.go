@@ -111,7 +111,7 @@ func (t *Transport) Token() (string, error) {
 }
 
 func (t *Transport) refreshToken() error {
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/installations/%v/access_tokens", t.BaseURL, t.installationID), nil)
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/app/installations/%v/access_tokens", t.BaseURL, t.installationID), nil)
 	if err != nil {
 		return fmt.Errorf("could not create request: %s", err)
 	}
