@@ -111,7 +111,7 @@ func (t *Transport) Token() (string, error) {
 }
 
 func (t *Transport) refreshToken() error {
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/installations/%v/access_tokens", t.BaseURL, t.installationID), nil)
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/app/installations/%v/access_tokens", t.BaseURL, t.installationID), nil)
 	if err != nil {
 		return fmt.Errorf("could not create request: %s", err)
 	}
@@ -128,9 +128,5 @@ func (t *Transport) refreshToken() error {
 		return fmt.Errorf("received non 2xx response status %q when fetching %v", resp.Status, req.URL)
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&t.token); err != nil {
-		return err
-	}
-
-	return nil
+	return json.NewDecoder(resp.Body).Decode(&t.token)
 }
