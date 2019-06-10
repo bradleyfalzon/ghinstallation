@@ -58,7 +58,7 @@ WebHook request
 
 # License
 
-[Unlicense](LICENSE) - feel free to copy/paste without attribution/preservation of license etc.
+[Apache 2.0](LICENSE)
 
 # Dependencies
 
