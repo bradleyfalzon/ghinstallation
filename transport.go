@@ -1,6 +1,7 @@
 package ghinstallation
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -84,7 +85,7 @@ func New(tr http.RoundTripper, integrationID, installationID int, privateKey []b
 
 // RoundTrip implements http.RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	token, err := t.Token()
+	token, err := t.Token(req.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -97,12 +98,12 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 // Token checks the active token expiration and renews if necessary. Token returns
 // a valid access token. If renewal fails an error is returned.
-func (t *Transport) Token() (string, error) {
+func (t *Transport) Token(ctx context.Context) (string, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.token == nil || t.token.ExpiresAt.Add(-time.Minute).Before(time.Now()) {
 		// Token is not set or expired/nearly expired, so refresh
-		if err := t.refreshToken(); err != nil {
+		if err := t.refreshToken(ctx); err != nil {
 			return "", fmt.Errorf("could not refresh installation id %v's token: %s", t.installationID, err)
 		}
 	}
@@ -110,10 +111,14 @@ func (t *Transport) Token() (string, error) {
 	return t.token.Token, nil
 }
 
-func (t *Transport) refreshToken() error {
+func (t *Transport) refreshToken(ctx context.Context) error {
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/app/installations/%v/access_tokens", t.BaseURL, t.installationID), nil)
 	if err != nil {
 		return fmt.Errorf("could not create request: %s", err)
+	}
+
+	if ctx != nil {
+		req = req.WithContext(ctx)
 	}
 
 	t.appsTransport.BaseURL = t.BaseURL
