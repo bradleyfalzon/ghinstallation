@@ -20,20 +20,20 @@ import (
 //
 // See https://developer.github.com/apps/building-integrations/setting-up-and-registering-github-apps/about-authentication-options-for-github-apps/
 type AppsTransport struct {
-	BaseURL       string            // BaseURL is the scheme and host for GitHub API, defaults to https://api.github.com
-	Client        Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
-	tr            http.RoundTripper // tr is the underlying roundtripper being wrapped
-	key           *rsa.PrivateKey   // key is the GitHub Integration's private key
-	integrationID int               // integrationID is the GitHub Integration's Installation ID
+	BaseURL string            // BaseURL is the scheme and host for GitHub API, defaults to https://api.github.com
+	Client  Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
+	tr      http.RoundTripper // tr is the underlying roundtripper being wrapped
+	key     *rsa.PrivateKey   // key is the GitHub App's private key
+	appID   int               // appID is the GitHub App's ID
 }
 
 // NewAppsTransportKeyFromFile returns a AppsTransport using a private key from file.
-func NewAppsTransportKeyFromFile(tr http.RoundTripper, integrationID int, privateKeyFile string) (*AppsTransport, error) {
+func NewAppsTransportKeyFromFile(tr http.RoundTripper, appID int, privateKeyFile string) (*AppsTransport, error) {
 	privateKey, err := ioutil.ReadFile(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read private key: %s", err)
 	}
-	return NewAppsTransport(tr, integrationID, privateKey)
+	return NewAppsTransport(tr, appID, privateKey)
 }
 
 // NewAppsTransport returns a AppsTransport using private key. The key is parsed
@@ -43,12 +43,12 @@ func NewAppsTransportKeyFromFile(tr http.RoundTripper, integrationID int, privat
 // installations to ensure reuse of underlying TCP connections.
 //
 // The returned Transport's RoundTrip method is safe to be used concurrently.
-func NewAppsTransport(tr http.RoundTripper, integrationID int, privateKey []byte) (*AppsTransport, error) {
+func NewAppsTransport(tr http.RoundTripper, appID int, privateKey []byte) (*AppsTransport, error) {
 	t := &AppsTransport{
-		tr:            tr,
-		integrationID: integrationID,
-		BaseURL:       apiBaseURL,
-		Client:        &http.Client{Transport: tr},
+		tr:      tr,
+		appID:   appID,
+		BaseURL: apiBaseURL,
+		Client:  &http.Client{Transport: tr},
 	}
 	var err error
 	t.key, err = jwt.ParseRSAPrivateKeyFromPEM(privateKey)
@@ -63,7 +63,7 @@ func (t *AppsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	claims := &jwt.StandardClaims{
 		IssuedAt:  time.Now().Unix(),
 		ExpiresAt: time.Now().Add(time.Minute).Unix(),
-		Issuer:    strconv.Itoa(t.integrationID),
+		Issuer:    strconv.Itoa(t.appID),
 	}
 	bearer := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
 

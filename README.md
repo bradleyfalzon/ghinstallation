@@ -2,13 +2,14 @@
 
 [![GoDoc](https://godoc.org/github.com/bradleyfalzon/ghinstallation?status.svg)](https://godoc.org/github.com/bradleyfalzon/ghinstallation)
 
-`ghinstallation` provides `Transport`, which implements `http.RoundTripper` to provide authentication as an installation
-for GitHub Apps.
+`ghinstallation` provides `Transport`, which implements `http.RoundTripper` to
+provide authentication as an installation for GitHub Apps.
 
-This library is designed to provide automatic authentication for https://github.com/google/go-github or your own HTTP
-client.
+This library is designed to provide automatic authentication for
+https://github.com/google/go-github or your own HTTP client.
 
-See https://developer.github.com/apps/building-integrations/setting-up-and-registering-github-apps/about-authentication-options-for-github-apps/
+See
+https://developer.github.com/apps/building-integrations/setting-up-and-registering-github-apps/about-authentication-options-for-github-apps/
 
 # Example
 
@@ -27,7 +28,7 @@ func main() {
     // Shared transport to reuse TCP connections.
     tr := http.DefaultTransport
 
-    // Wrap the shared transport for use with the integration ID 1 authenticating with installation ID 99.
+    // Wrap the shared transport for use with the app ID 1 authenticating with installation ID 99.
     itr, err := ghinstallation.NewKeyFromFile(tr, 1, 99, "2016-10-19.private-key.pem")
     if err != nil {
         log.Fatal(err)
@@ -38,14 +39,16 @@ func main() {
 }
 ```
 
-## What is integration ID and installation ID
-`integration ID` is GitHub App ID.  
-You can check as following :  
-Settings > Developer > settings > GitHub App > About item 
+## What is app ID and installation ID
 
-`installation ID` is a part of WebHook request.  
-You can get the number to check the request.  
-Settings > Developer > settings > GitHub Apps > Advanced > Payload in Request tab
+`app ID` is the GitHub App ID. \
+You can check as following : \
+Settings > Developer > settings > GitHub App > About item
+
+`installation ID` is a part of WebHook request. \
+You can get the number to check the request. \
+Settings > Developer > settings > GitHub Apps > Advanced > Payload in Request
+tab
 
 ```
 WebHook request
@@ -55,11 +58,10 @@ WebHook request
   }
 ```
 
-
 # License
 
 [Apache 2.0](LICENSE)
 
 # Dependencies
 
-- [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
+-   [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
