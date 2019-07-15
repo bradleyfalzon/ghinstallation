@@ -55,7 +55,7 @@ func TestAppsTransport(t *testing.T) {
 		},
 	}
 
-	tr, err := NewAppsTransport(check, integrationID, key)
+	tr, err := NewAppsTransport(check, appID, key)
 	if err != nil {
 		t.Fatalf("error creating transport: %v", err)
 	}
