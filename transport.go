@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	// acceptHeader is the GitHub Integrations Preview Accept header.
+	// acceptHeader is the GitHub Apps Preview Accept header.
 	acceptHeader = "application/vnd.github.machine-man-preview+json"
 	apiBaseURL   = "https://api.github.com"
 )
@@ -28,8 +28,8 @@ type Transport struct {
 	BaseURL        string            // BaseURL is the scheme and host for GitHub API, defaults to https://api.github.com
 	Client         Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
 	tr             http.RoundTripper // tr is the underlying roundtripper being wrapped
-	integrationID  int               // integrationID is the GitHub Integration's Installation ID
-	installationID int               // installationID is the GitHub Integration's Installation ID
+	appID          int               // appID is the GitHub App's ID
+	installationID int               // installationID is the GitHub App Installation ID
 	appsTransport  *AppsTransport
 
 	mu    *sync.Mutex  // mu protects token
@@ -45,12 +45,12 @@ type accessToken struct {
 var _ http.RoundTripper = &Transport{}
 
 // NewKeyFromFile returns a Transport using a private key from file.
-func NewKeyFromFile(tr http.RoundTripper, integrationID, installationID int, privateKeyFile string) (*Transport, error) {
+func NewKeyFromFile(tr http.RoundTripper, appID, installationID int, privateKeyFile string) (*Transport, error) {
 	privateKey, err := ioutil.ReadFile(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read private key: %s", err)
 	}
-	return New(tr, integrationID, installationID, privateKey)
+	return New(tr, appID, installationID, privateKey)
 }
 
 // Client is a HTTP client which sends a http.Request and returns a http.Response
@@ -66,17 +66,17 @@ type Client interface {
 // installations to ensure reuse of underlying TCP connections.
 //
 // The returned Transport's RoundTrip method is safe to be used concurrently.
-func New(tr http.RoundTripper, integrationID, installationID int, privateKey []byte) (*Transport, error) {
+func New(tr http.RoundTripper, appID, installationID int, privateKey []byte) (*Transport, error) {
 	t := &Transport{
 		tr:             tr,
-		integrationID:  integrationID,
+		appID:          appID,
 		installationID: installationID,
 		BaseURL:        apiBaseURL,
 		Client:         &http.Client{Transport: tr},
 		mu:             &sync.Mutex{},
 	}
 	var err error
-	t.appsTransport, err = NewAppsTransport(t.tr, t.integrationID, privateKey)
+	t.appsTransport, err = NewAppsTransport(t.tr, t.appID, privateKey)
 	if err != nil {
 		return nil, err
 	}
