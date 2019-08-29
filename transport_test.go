@@ -181,8 +181,8 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 	installationTokenOptions := &github.InstallationTokenOptions{
 		RepositoryIDs: []int64{1234},
 		Permissions: &github.InstallationPermissions{
-			Contents: String("write"),
-			Issues:   String("read"),
+			Contents: github.String("write"),
+			Issues:   github.String("read"),
 		},
 	}
 
@@ -216,11 +216,11 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 				Token:     "token_string",
 				ExpiresAt: time.Now(),
 				Repositories: []github.Repository{{
-					ID: Int64(1234),
+					ID: github.Int64(1234),
 				}},
 				Permissions: github.InstallationPermissions{
-					Contents: String("write"),
-					Issues:   String("read"),
+					Contents: github.String("write"),
+					Issues:   github.String("read"),
 				},
 			}
 			tokenBody, err := GetReadCloser(accessToken)
