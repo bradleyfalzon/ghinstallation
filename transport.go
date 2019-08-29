@@ -46,7 +46,7 @@ type accessToken struct {
 	Token     string    `json:"token"`
 	ExpiresAt time.Time `json:"expires_at"`
 	Permissions  github.InstallationPermissions `json:"permissions,omitempty"`
-	Repositories []github.Repository            `json:"repositories,emitempty"`
+	Repositories []github.Repository            `json:"repositories,omitempty"`
 }
 
 var _ http.RoundTripper = &Transport{}
