@@ -192,10 +192,5 @@ func GetReadCloser(i interface{}) (io.ReadCloser, error) {
 		return nil, err
 	}
 
-	all, err := ioutil.ReadAll(buf)
-	if err != nil {
-		return nil, err
-	}
-
-	return ioutil.NopCloser(bytes.NewBuffer(all)), nil
+	return ioutil.NopCloser(buf), nil
 }
