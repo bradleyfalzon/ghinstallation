@@ -65,5 +65,4 @@ func TestAppsTransport(t *testing.T) {
 	if _, err := tr.RoundTrip(req); err != nil {
 		t.Fatalf("error calling RoundTrip: %v", err)
 	}
-
 }

@@ -1,6 +1,7 @@
 package ghinstallation
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -9,6 +10,9 @@ import (
 	"os"
 	"testing"
 	"time"
+	
+	"github.com/google/gocmp/cmp"
+	"github.com/google/go-github/github"
 )
 
 const (
@@ -46,7 +50,6 @@ kGTL0A6/0yAu9qQZlFbaD5bWhQo7eyx63u4hZGppBhkTSPikOYUPCH8=
 -----END RSA PRIVATE KEY-----`)
 
 func TestNew(t *testing.T) {
-
 	var authed bool
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Accept") != acceptHeader {
@@ -171,5 +174,75 @@ func TestNew_appendHeader(t *testing.T) {
 
 	if !found {
 		t.Errorf("could not find %v in request's accept headers: %v", myheader, headers["Accept"])
+	}
+}
+
+func TestRefreshTokenWithParameters(t *testing.T) {
+	installationTokenOptions := &github.InstallationTokenOptions{
+		RepositoryIDs: []int64{1234},
+		Permissions: &github.InstallationPermissions{
+			Contents: github.String("write"),
+			Issues:   github.String("read"),
+		},
+	}
+
+	// Convert InstallationTokenOptions into a ReadWriter to pass as an argument to http.NewRequest.
+	body, err := GetReadWriter(installationTokenOptions)
+	if err != nil {
+		t.Fatalf("error calling GetReadWriter: %v", err)
+	}
+
+	// Convert io.ReadWriter to String without deleting body data.
+	wantBody, _ := GetReadWriter(installationTokenOptions)
+	wantBodyBytes := new(bytes.Buffer)
+	wantBodyBytes.ReadFrom(wantBody)
+	wantBodyString := wantBodyBytes.String()
+
+	roundTripper := RoundTrip{
+		rt: func(req *http.Request) (*http.Response, error) {
+			// Convert io.ReadCloser to String without deleting body data.
+			var gotBodyBytes []byte
+			gotBodyBytes, _ = ioutil.ReadAll(req.Body)
+			req.Body = ioutil.NopCloser(bytes.NewBuffer(gotBodyBytes))
+			gotBodyString := string(gotBodyBytes)
+
+			// Compare request sent with request received.
+			if diff := cmp.Diff(wantBodyString, gotBodyString); diff != "" {
+				t.Errorf("HTTP body want->got: %s", diff)
+			}
+
+			// Return acceptable access token.
+			accessToken := accessToken{
+				Token:     "token_string",
+				ExpiresAt: time.Now(),
+				Repositories: []github.Repository{{
+					ID: github.Int64(1234),
+				}},
+				Permissions: github.InstallationPermissions{
+					Contents: github.String("write"),
+					Issues:   github.String("read"),
+				},
+			}
+			tokenReadWriter, err := GetReadWriter(accessToken)
+			if err != nil {
+				return nil, fmt.Errorf("error converting token into io.ReadWriter: %+v", err)
+			}
+			tokenBody := ioutil.NopCloser(tokenReadWriter)
+			return &http.Response{
+				Body:       tokenBody,
+				StatusCode: 200,
+			}, nil
+		},
+	}
+
+	tr, err := New(roundTripper, appID, installationID, key)
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+	tr.InstallationTokenOptions = installationTokenOptions
+
+	req, err := http.NewRequest("POST", fmt.Sprintf("%s/app/installations/%v/access_tokens", tr.BaseURL, tr.installationID), body)
+	if _, err := tr.RoundTrip(req); err != nil {
+		t.Fatalf("error calling RoundTrip: %v", err)
 	}
 }
