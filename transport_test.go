@@ -223,10 +223,11 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 					Issues:   github.String("read"),
 				},
 			}
-			tokenBody, err := GetReadCloser(accessToken)
+			tokenReadWriter, err := GetReadWriter(accessToken)
 			if err != nil {
-				return nil, fmt.Errorf("error converting token into io.ReadCloser: %+v", err)
+				return nil, fmt.Errorf("error converting token into io.ReadWriter: %+v", err)
 			}
+			tokenBody := ioutil.NopCloser(tokenReadWriter)
 			return &http.Response{
 				Body:       tokenBody,
 				StatusCode: 200,
