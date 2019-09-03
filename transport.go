@@ -184,13 +184,3 @@ func GetReadWriter(i interface{}) (io.ReadWriter, error) {
 	}
 	return buf, nil
 }
-
-// GetReadCloser converts a body interface into an io.ReadCloser object.
-func GetReadCloser(i interface{}) (io.ReadCloser, error) {
-	buf, err := GetReadWriter(i)
-	if err != nil {
-		return nil, err
-	}
-
-	return ioutil.NopCloser(buf), nil
-}
