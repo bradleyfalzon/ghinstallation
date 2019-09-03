@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 	
-	"github.com/google/gocmp/cmp"
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-github/github"
 )
 
