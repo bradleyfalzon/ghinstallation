@@ -11,7 +11,7 @@ https://github.com/google/go-github or your own HTTP client.
 See
 https://developer.github.com/apps/building-integrations/setting-up-and-registering-github-apps/about-authentication-options-for-github-apps/
 
-# Example
+# Installation
 
 Get the package:
 
@@ -19,7 +19,7 @@ Get the package:
 go get -u github.com/bradleyfalzon/ghinstallation
 ```
 
-Usage:
+# GitHub Example
 
 ```go
 import "github.com/bradleyfalzon/ghinstallation"
@@ -36,6 +36,31 @@ func main() {
 
     // Use installation transport with github.com/google/go-github
     client := github.NewClient(&http.Client{Transport: itr})
+}
+```
+
+# GitHub Enterprise Example
+
+For clients using GitHub Enterprise, set the base URL as follows:
+
+```go
+import "github.com/bradleyfalzon/ghinstallation"
+
+const GitHubEnterpriseURL = "https://github.example.com/api/v3"
+
+func main() {
+    // Shared transport to reuse TCP connections.
+    tr := http.DefaultTransport
+
+    // Wrap the shared transport for use with the app ID 1 authenticating with installation ID 99.
+    itr, err := ghinstallation.NewKeyFromFile(tr, 1, 99, "2016-10-19.private-key.pem")
+    if err != nil {
+        log.Fatal(err)
+    }
+    itr.BaseURL = GitHubEnterpriseURL
+
+    // Use installation transport with github.com/google/go-github
+    client := github.NewEnterpriseClient(GitHubEnterpriseURL, GitHubEnterpriseURL, &http.Client{Transport: itr})
 }
 ```
 
