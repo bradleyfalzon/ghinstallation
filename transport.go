@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"sync"
 	"time"
-	
+
 	"github.com/google/go-github/github"
 )
 
@@ -29,13 +29,13 @@ const (
 //
 // See https://developer.github.com/apps/building-integrations/setting-up-and-registering-github-apps/about-authentication-options-for-github-apps/
 type Transport struct {
-	BaseURL        string            // BaseURL is the scheme and host for GitHub API, defaults to https://api.github.com
-	Client         Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
-	tr             http.RoundTripper // tr is the underlying roundtripper being wrapped
-	appID          int               // appID is the GitHub App's ID
-	installationID int               // installationID is the GitHub App Installation ID
+	BaseURL                  string                           // BaseURL is the scheme and host for GitHub API, defaults to https://api.github.com
+	Client                   Client                           // Client to use to refresh tokens, defaults to http.Client with provided transport
+	tr                       http.RoundTripper                // tr is the underlying roundtripper being wrapped
+	appID                    int64                            // appID is the GitHub App's ID
+	installationID           int64                            // installationID is the GitHub App Installation ID
 	InstallationTokenOptions *github.InstallationTokenOptions // parameters restrict a token's access
-	appsTransport  *AppsTransport
+	appsTransport            *AppsTransport
 
 	mu    *sync.Mutex  // mu protects token
 	token *accessToken // token is the installation's access token
@@ -43,8 +43,8 @@ type Transport struct {
 
 // accessToken is an installation access token response from GitHub
 type accessToken struct {
-	Token     string    `json:"token"`
-	ExpiresAt time.Time `json:"expires_at"`
+	Token        string                         `json:"token"`
+	ExpiresAt    time.Time                      `json:"expires_at"`
 	Permissions  github.InstallationPermissions `json:"permissions,omitempty"`
 	Repositories []github.Repository            `json:"repositories,omitempty"`
 }
@@ -52,7 +52,7 @@ type accessToken struct {
 var _ http.RoundTripper = &Transport{}
 
 // NewKeyFromFile returns a Transport using a private key from file.
-func NewKeyFromFile(tr http.RoundTripper, appID, installationID int, privateKeyFile string) (*Transport, error) {
+func NewKeyFromFile(tr http.RoundTripper, appID, installationID int64, privateKeyFile string) (*Transport, error) {
 	privateKey, err := ioutil.ReadFile(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read private key: %s", err)
@@ -73,7 +73,7 @@ type Client interface {
 // installations to ensure reuse of underlying TCP connections.
 //
 // The returned Transport's RoundTrip method is safe to be used concurrently.
-func New(tr http.RoundTripper, appID, installationID int, privateKey []byte) (*Transport, error) {
+func New(tr http.RoundTripper, appID, installationID int64, privateKey []byte) (*Transport, error) {
 	t := &Transport{
 		tr:             tr,
 		appID:          appID,
@@ -140,12 +140,12 @@ func (t *Transport) refreshToken(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("could not convert installation token parameters into json: %s", err)
 	}
-	
+
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/app/installations/%v/access_tokens", t.BaseURL, t.installationID), body)
 	if err != nil {
 		return fmt.Errorf("could not create request: %s", err)
 	}
-	
+
 	// Set Content and Accept headers.
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
