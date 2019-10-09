@@ -10,9 +10,9 @@ import (
 	"os"
 	"testing"
 	"time"
-	
+
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-github/github"
+	"github.com/google/go-github/v28/github"
 )
 
 const (
