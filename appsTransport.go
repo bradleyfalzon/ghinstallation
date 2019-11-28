@@ -44,18 +44,21 @@ func NewAppsTransportKeyFromFile(tr http.RoundTripper, appID int64, privateKeyFi
 //
 // The returned Transport's RoundTrip method is safe to be used concurrently.
 func NewAppsTransport(tr http.RoundTripper, appID int64, privateKey []byte) (*AppsTransport, error) {
-	t := &AppsTransport{
-		tr:      tr,
-		appID:   appID,
-		BaseURL: apiBaseURL,
-		Client:  &http.Client{Transport: tr},
-	}
-	var err error
-	t.key, err = jwt.ParseRSAPrivateKeyFromPEM(privateKey)
+	key, err := jwt.ParseRSAPrivateKeyFromPEM(privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse private key: %s", err)
 	}
-	return t, nil
+	return NewAppsTransportFromPrivateKey(tr, appID, key), nil
+}
+
+func NewAppsTransportFromPrivateKey(tr http.RoundTripper, appID int64, key *rsa.PrivateKey) (*AppsTransport) {
+	return &AppsTransport{
+		BaseURL: apiBaseURL,
+		Client:  &http.Client{Transport: tr},
+		tr:      tr,
+		key:     key,
+		appID:   appID,
+	}
 }
 
 // RoundTrip implements http.RoundTripper interface.
