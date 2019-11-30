@@ -74,20 +74,25 @@ type Client interface {
 //
 // The returned Transport's RoundTrip method is safe to be used concurrently.
 func New(tr http.RoundTripper, appID, installationID int64, privateKey []byte) (*Transport, error) {
-	t := &Transport{
-		tr:             tr,
-		appID:          appID,
-		installationID: installationID,
-		BaseURL:        apiBaseURL,
-		Client:         &http.Client{Transport: tr},
-		mu:             &sync.Mutex{},
-	}
-	var err error
-	t.appsTransport, err = NewAppsTransport(t.tr, t.appID, privateKey)
+	atr, err := NewAppsTransport(tr, appID, privateKey)
 	if err != nil {
 		return nil, err
 	}
-	return t, nil
+
+	return NewFromAppsTransport(atr, installationID), nil
+}
+
+// NewFromAppsTransport returns a Transport using an existing *AppsTransport.
+func NewFromAppsTransport(atr *AppsTransport, installationID int64) *Transport {
+	return &Transport{
+		BaseURL:        apiBaseURL,
+		Client:         &http.Client{Transport: atr.tr},
+		tr:             atr.tr,
+		appID:          atr.appID,
+		installationID: installationID,
+		appsTransport:  atr,
+		mu:             &sync.Mutex{},
+	}
 }
 
 // RoundTrip implements http.RoundTripper interface.
