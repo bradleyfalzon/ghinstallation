@@ -51,6 +51,7 @@ func NewAppsTransport(tr http.RoundTripper, appID int64, privateKey []byte) (*Ap
 	return NewAppsTransportFromPrivateKey(tr, appID, key), nil
 }
 
+// NewAppsTransportFromPrivateKey returns an AppsTransport using a crypto/rsa.(*PrivateKey).
 func NewAppsTransportFromPrivateKey(tr http.RoundTripper, appID int64, key *rsa.PrivateKey) (*AppsTransport) {
 	return &AppsTransport{
 		BaseURL: apiBaseURL,

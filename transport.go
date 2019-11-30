@@ -82,6 +82,7 @@ func New(tr http.RoundTripper, appID, installationID int64, privateKey []byte) (
 	return NewFromAppsTransport(atr, installationID), nil
 }
 
+// NewFromAppsTransport returns a Transport using an existing *AppsTransport.
 func NewFromAppsTransport(atr *AppsTransport, installationID int64) *Transport {
 	return &Transport{
 		BaseURL:        apiBaseURL,
