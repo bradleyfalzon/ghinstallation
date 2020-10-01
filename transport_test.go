@@ -136,6 +136,17 @@ func TestNewKeyFromFile(t *testing.T) {
 	}
 }
 
+func TestNewKeyFromENV(t *testing.T) {
+	if err := os.Setenv("KEY", string(key)); err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	_, err := NewKeyFromEnv(&http.Transport{}, appID, installationID, "KEY")
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+}
+
 func TestNew_appendHeader(t *testing.T) {
 	var headers http.Header
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
