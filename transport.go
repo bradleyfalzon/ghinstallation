@@ -63,7 +63,10 @@ func NewKeyFromFile(tr http.RoundTripper, appID, installationID int64, privateKe
 
 // NewKeyFromFile returns a Transport using a private key from environment variable.
 func NewKeyFromEnv(tr http.RoundTripper, appID, installationID int64, privateKeyEnv string) (*Transport, error) {
-	privateKey := os.Getenv(privateKeyEnv)
+	privateKey, ok := os.LookupEnv(privateKeyEnv)
+	if ok != true {
+		return nil, fmt.Errorf("private key environment variable %s empty", privateKeyEnv)
+	}
 	return New(tr, appID, installationID, []byte(privateKey))
 }
 
