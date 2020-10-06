@@ -40,7 +40,7 @@ func NewAppsTransportKeyFromFile(tr http.RoundTripper, appID int64, privateKeyFi
 // NewAppsTransportKeyFromEnv returns a AppsTransport using a private key from environment variable.
 func NewAppsTransportKeyFromEnv(tr http.RoundTripper, appID int64, privateKeyEnv string) (*AppsTransport, error) {
 	privateKey, ok := os.LookupEnv(privateKeyEnv)
-	if ok != true {
+	if !ok {
 		return nil, fmt.Errorf("private key environment variable %s empty", privateKeyEnv)
 	}
 	return NewAppsTransport(tr, appID, []byte(privateKey))
