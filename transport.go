@@ -38,11 +38,11 @@ type Transport struct {
 	appsTransport            *AppsTransport
 
 	mu    *sync.Mutex  // mu protects token
-	token *accessToken // token is the installation's access token
+	token *AccessToken // token is the installation's access token
 }
 
-// accessToken is an installation access token response from GitHub
-type accessToken struct {
+// AccessToken is an installation access token response from GitHub
+type AccessToken struct {
 	Token        string                         `json:"token"`
 	ExpiresAt    time.Time                      `json:"expires_at"`
 	Permissions  github.InstallationPermissions `json:"permissions,omitempty"`
@@ -188,4 +188,11 @@ func GetReadWriter(i interface{}) (io.ReadWriter, error) {
 		}
 	}
 	return buf, nil
+}
+
+// SetToken sets the underlying Transport AccessToken.
+func (t *Transport) SetToken(tok AccessToken) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.token = &tok
 }
