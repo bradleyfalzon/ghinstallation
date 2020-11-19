@@ -212,7 +212,7 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 			}
 
 			// Return acceptable access token.
-			AccessToken := AccessToken{
+			accessToken := AccessToken{
 				Token:     "token_string",
 				ExpiresAt: time.Now(),
 				Repositories: []github.Repository{{
@@ -223,7 +223,7 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 					Issues:   github.String("read"),
 				},
 			}
-			tokenReadWriter, err := GetReadWriter(AccessToken)
+			tokenReadWriter, err := GetReadWriter(accessToken)
 			if err != nil {
 				return nil, fmt.Errorf("error converting token into io.ReadWriter: %+v", err)
 			}
