@@ -170,7 +170,7 @@ func (t *Transport) refreshToken(ctx context.Context) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode/100 != 2 {
-		return fmt.Errorf("request %+v received non 2xx response status %q with body %+v and TLS %+v", resp.Request, resp.Body, resp.Request, resp.TLS)
+		return fmt.Errorf("request %+v received non 2xx response status %q with body %+v and TLS %+v", resp.Request, resp.StatusCode, resp.Body, resp.TLS)
 	}
 
 	return json.NewDecoder(resp.Body).Decode(&t.token)
