@@ -16,7 +16,7 @@ https://developer.github.com/apps/building-integrations/setting-up-and-registeri
 Get the package:
 
 ```bash
-go get -u github.com/bradleyfalzon/ghinstallation
+GO111MODULE=on go get -u github.com/bradleyfalzon/ghinstallation
 ```
 
 # GitHub Example
