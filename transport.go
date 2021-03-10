@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -47,6 +48,20 @@ type accessToken struct {
 	ExpiresAt    time.Time                      `json:"expires_at"`
 	Permissions  github.InstallationPermissions `json:"permissions,omitempty"`
 	Repositories []github.Repository            `json:"repositories,omitempty"`
+}
+
+// RefreshTokenError represents a custom error for the refresh access tokens operations.
+// It enables the caller to inspect the root cause and response.
+type RefreshTokenError struct {
+	Message        string
+	RootCause      error
+	InstallationID int64
+	Request        *http.Request
+	Response       *http.Response
+}
+
+func (e RefreshTokenError) Error() string {
+	return e.Message
 }
 
 var _ http.RoundTripper = &Transport{}
@@ -116,7 +131,14 @@ func (t *Transport) Token(ctx context.Context) (string, error) {
 	if t.token == nil || t.token.ExpiresAt.Add(-time.Minute).Before(time.Now()) {
 		// Token is not set or expired/nearly expired, so refresh
 		if err := t.refreshToken(ctx); err != nil {
-			return "", fmt.Errorf("could not refresh installation id %v's token: %s", t.installationID, err)
+			errorMessage := fmt.Sprintf("could not refresh installation id %v's token: %s", t.installationID, err)
+			re, ok := err.(*RefreshTokenError)
+			if ok {
+				re.Message = errorMessage
+				return "", re
+			}
+
+			return "", errors.New(errorMessage)
 		}
 	}
 
@@ -164,13 +186,22 @@ func (t *Transport) refreshToken(ctx context.Context) error {
 	t.appsTransport.BaseURL = t.BaseURL
 	t.appsTransport.Client = t.Client
 	resp, err := t.appsTransport.RoundTrip(req)
+	e := RefreshTokenError{
+		Message:        fmt.Sprintf("received non 2xx response status %q when fetching %v", resp.Status, req.URL),
+		RootCause:      err,
+		InstallationID: t.installationID,
+		Request:        req,
+		Response:       resp,
+	}
 	if err != nil {
-		return fmt.Errorf("could not get access_tokens from GitHub API for installation ID %v: %v", t.installationID, err)
+		e.Message = fmt.Sprintf("could not get access_tokens from GitHub API for installation ID %v: %v", t.installationID, err)
+		return e
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode/100 != 2 {
-		return fmt.Errorf("received non 2xx response status %q when fetching %v", resp.Status, req.URL)
+		e.Message = fmt.Sprintf("received non 2xx response status %q when fetching %v", resp.Status, req.URL)
+		return e
 	}
 
 	return json.NewDecoder(resp.Body).Decode(&t.token)
