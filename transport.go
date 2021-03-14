@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -56,7 +55,6 @@ type RefreshTokenError struct {
 	Message        string
 	RootCause      error
 	InstallationID int64
-	Request        *http.Request
 	Response       *http.Response
 }
 
@@ -131,7 +129,7 @@ func (t *Transport) Token(ctx context.Context) (string, error) {
 	if t.token == nil || t.token.ExpiresAt.Add(-time.Minute).Before(time.Now()) {
 		// Token is not set or expired/nearly expired, so refresh
 		if err := t.refreshToken(ctx); err != nil {
-	return "", fmt.Errorf("could not refresh installation id %v's token: %w", t.installationID, err)
+			return "", fmt.Errorf("could not refresh installation id %v's token: %w", t.installationID, err)
 		}
 	}
 
@@ -183,7 +181,6 @@ func (t *Transport) refreshToken(ctx context.Context) error {
 		Message:        fmt.Sprintf("received non 2xx response status %q when fetching %v", resp.Status, req.URL),
 		RootCause:      err,
 		InstallationID: t.installationID,
-		Request:        req,
 		Response:       resp,
 	}
 	if err != nil {
