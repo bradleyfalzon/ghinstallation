@@ -187,12 +187,13 @@ func (t *Transport) refreshToken(ctx context.Context) error {
 		e.Message = fmt.Sprintf("could not get access_tokens from GitHub API for installation ID %v: %v", t.installationID, err)
 		return e
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode/100 != 2 {
 		e.Message = fmt.Sprintf("received non 2xx response status %q when fetching %v", resp.Status, req.URL)
 		return e
 	}
+	// Closing body late, to provide caller a chance to inspect body in an error / non-200 response status situation
+	defer resp.Body.Close()
 
 	return json.NewDecoder(resp.Body).Decode(&t.token)
 }
