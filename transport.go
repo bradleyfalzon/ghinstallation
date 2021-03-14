@@ -131,14 +131,7 @@ func (t *Transport) Token(ctx context.Context) (string, error) {
 	if t.token == nil || t.token.ExpiresAt.Add(-time.Minute).Before(time.Now()) {
 		// Token is not set or expired/nearly expired, so refresh
 		if err := t.refreshToken(ctx); err != nil {
-			errorMessage := fmt.Sprintf("could not refresh installation id %v's token: %s", t.installationID, err)
-			re, ok := err.(*RefreshTokenError)
-			if ok {
-				re.Message = errorMessage
-				return "", re
-			}
-
-			return "", errors.New(errorMessage)
+	return "", fmt.Errorf("could not refresh installation id %v's token: %w", t.installationID, err)
 		}
 	}
 
