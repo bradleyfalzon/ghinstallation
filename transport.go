@@ -178,7 +178,6 @@ func (t *Transport) refreshToken(ctx context.Context) error {
 	t.appsTransport.Client = t.Client
 	resp, err := t.appsTransport.RoundTrip(req)
 	e := &RefreshTokenError{
-		Message:        fmt.Sprintf("received non 2xx response status %q when fetching %v", resp.Status, req.URL),
 		RootCause:      err,
 		InstallationID: t.installationID,
 		Response:       resp,
