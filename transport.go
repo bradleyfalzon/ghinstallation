@@ -58,7 +58,7 @@ type RefreshTokenError struct {
 	Response       *http.Response
 }
 
-func (e RefreshTokenError) Error() string {
+func (e *RefreshTokenError) Error() string {
 	return e.Message
 }
 
@@ -177,7 +177,7 @@ func (t *Transport) refreshToken(ctx context.Context) error {
 	t.appsTransport.BaseURL = t.BaseURL
 	t.appsTransport.Client = t.Client
 	resp, err := t.appsTransport.RoundTrip(req)
-	e := RefreshTokenError{
+	e := &RefreshTokenError{
 		Message:        fmt.Sprintf("received non 2xx response status %q when fetching %v", resp.Status, req.URL),
 		RootCause:      err,
 		InstallationID: t.installationID,
