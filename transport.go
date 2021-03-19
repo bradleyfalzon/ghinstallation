@@ -49,16 +49,17 @@ type accessToken struct {
 	Repositories []github.Repository            `json:"repositories,omitempty"`
 }
 
-// RefreshTokenError represents a custom error for the refresh access tokens operations.
+// HTTPError represents a custom error for failing HTTP operatins.
+// Example in our usecase: refresh access token operation.
 // It enables the caller to inspect the root cause and response.
-type RefreshTokenError struct {
+type HTTPError struct {
 	Message        string
 	RootCause      error
 	InstallationID int64
 	Response       *http.Response
 }
 
-func (e *RefreshTokenError) Error() string {
+func (e *HTTPError) Error() string {
 	return e.Message
 }
 
@@ -177,7 +178,7 @@ func (t *Transport) refreshToken(ctx context.Context) error {
 	t.appsTransport.BaseURL = t.BaseURL
 	t.appsTransport.Client = t.Client
 	resp, err := t.appsTransport.RoundTrip(req)
-	e := &RefreshTokenError{
+	e := &HTTPError{
 		RootCause:      err,
 		InstallationID: t.installationID,
 		Response:       resp,
