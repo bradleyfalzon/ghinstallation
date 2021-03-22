@@ -49,7 +49,7 @@ type accessToken struct {
 	Repositories []github.Repository            `json:"repositories,omitempty"`
 }
 
-// HTTPError represents a custom error for failing HTTP operatins.
+// HTTPError represents a custom error for failing HTTP operations.
 // Example in our usecase: refresh access token operation.
 // It enables the caller to inspect the root cause and response.
 type HTTPError struct {
