@@ -58,7 +58,7 @@ func TestNew(t *testing.T) {
 		switch r.RequestURI {
 		case fmt.Sprintf("/app/installations/%d/access_tokens", installationID):
 			// respond with any token to installation transport
-			js, _ := json.Marshal(accessToken{
+			js, _ := json.Marshal(AccessToken{
 				Token:     token,
 				ExpiresAt: time.Now().Add(5 * time.Minute),
 			})
@@ -212,7 +212,7 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 			}
 
 			// Return acceptable access token.
-			accessToken := accessToken{
+			accessToken := AccessToken{
 				Token:     "token_string",
 				ExpiresAt: time.Now(),
 				Repositories: []github.Repository{{
