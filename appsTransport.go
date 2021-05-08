@@ -64,9 +64,14 @@ func NewAppsTransportFromPrivateKey(tr http.RoundTripper, appID int64, key *rsa.
 
 // RoundTrip implements http.RoundTripper interface.
 func (t *AppsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// GitHub rejects expiry and issue timestamps that are not an integer,
+	// while the jwt-go library serializes to fractional timestamps.
+	// Truncate them before passing to jwt-go.
+	iss := time.Now().Add(-30 * time.Second).Truncate(time.Second)
+	exp := iss.Add(2 * time.Minute)
 	claims := &jwt.StandardClaims{
-		IssuedAt:  jwt.Now(),
-		ExpiresAt: jwt.At(time.Now().Add(time.Minute)),
+		IssuedAt:  jwt.At(iss),
+		ExpiresAt: jwt.At(exp),
 		Issuer:    strconv.FormatInt(t.appID, 10),
 	}
 	bearer := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
