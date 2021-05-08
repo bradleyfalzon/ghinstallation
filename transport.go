@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	// acceptHeader is the GitHub Apps Preview Accept header.
-	acceptHeader = "application/vnd.github.machine-man-preview+json"
+	acceptHeader = "application/vnd.github.v3+json"
 	apiBaseURL   = "https://api.github.com"
 )
 
