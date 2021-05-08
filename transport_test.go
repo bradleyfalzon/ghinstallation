@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-github/v30/github"
+	"github.com/google/go-github/v35/github"
 )
 
 const (
