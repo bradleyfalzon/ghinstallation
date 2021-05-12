@@ -16,13 +16,13 @@ https://developer.github.com/apps/building-integrations/setting-up-and-registeri
 Get the package:
 
 ```bash
-GO111MODULE=on go get -u github.com/bradleyfalzon/ghinstallation
+GO111MODULE=on go get -u github.com/bradleyfalzon/ghinstallation/v2
 ```
 
 # GitHub Example
 
 ```go
-import "github.com/bradleyfalzon/ghinstallation"
+import "github.com/bradleyfalzon/ghinstallation/v2"
 
 func main() {
     // Shared transport to reuse TCP connections.
@@ -44,7 +44,7 @@ func main() {
 For clients using GitHub Enterprise, set the base URL as follows:
 
 ```go
-import "github.com/bradleyfalzon/ghinstallation"
+import "github.com/bradleyfalzon/ghinstallation/v2"
 
 const GitHubEnterpriseURL = "https://github.example.com/api/v3"
 
