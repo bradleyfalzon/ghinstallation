@@ -2,15 +2,15 @@ package ghinstallation
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
-	"time"
 
-	jwt "github.com/dgrijalva/jwt-go/v4"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -80,16 +80,19 @@ func TestJWTExpiry(t *testing.T) {
 	check := RoundTrip{
 		rt: func(req *http.Request) (*http.Response, error) {
 			token := strings.Fields(req.Header.Get("Authorization"))[1]
-			tok, err := jwt.ParseWithClaims(token, &jwt.StandardClaims{}, jwt.KnownKeyfunc(jwt.SigningMethodRS256, key))
+			tok, err := jwt.ParseWithClaims(token, &jwt.StandardClaims{}, func(t *jwt.Token) (interface{}, error) {
+				if t.Header["alg"] != "RS256" {
+					return nil, fmt.Errorf("unexpected signing method: %v, expected: %v", t.Header["alg"], "RS256")
+				}
+				return &key.PublicKey, nil
+			})
 			if err != nil {
 				t.Fatalf("jwt parse: %v", err)
 			}
 
 			c := tok.Claims.(*jwt.StandardClaims)
-			if c.ExpiresAt == nil {
+			if c.ExpiresAt == 0 {
 				t.Fatalf("missing exp claim")
-			} else if c.ExpiresAt.Time != c.ExpiresAt.Truncate(time.Second) {
-				t.Fatalf("bad exp %v: not truncated to whole seconds", c.ExpiresAt.Time)
 			}
 			return nil, nil
 		},

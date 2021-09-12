@@ -242,6 +242,9 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 	tr.InstallationTokenOptions = installationTokenOptions
 
 	req, err := http.NewRequest("POST", fmt.Sprintf("%s/app/installations/%v/access_tokens", tr.BaseURL, tr.installationID), body)
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
 	if _, err := tr.RoundTrip(req); err != nil {
 		t.Fatalf("error calling RoundTrip: %v", err)
 	}

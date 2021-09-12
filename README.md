@@ -89,4 +89,4 @@ WebHook request
 
 # Dependencies
 
--   [github.com/dgrijalva/jwt-go](https://github.com/dgrijalva/jwt-go)
+-   [github.com/golang-jwt/jwt-go](https://github.com/golang-jwt/jwt-go)
