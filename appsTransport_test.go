@@ -34,6 +34,17 @@ func TestNewAppsTransportKeyFromFile(t *testing.T) {
 	}
 }
 
+func TestNewAppsTransportKeyFromEnv(t *testing.T) {
+	if err := os.Setenv("KEY", string(key)); err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+
+	_, err := NewAppsTransportKeyFromEnv(&http.Transport{}, appID, "KEY")
+	if err != nil {
+		t.Fatal("unexpected error:", err)
+	}
+}
+
 type RoundTrip struct {
 	rt func(*http.Request) (*http.Response, error)
 }

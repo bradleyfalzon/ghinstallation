@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -34,6 +35,15 @@ func NewAppsTransportKeyFromFile(tr http.RoundTripper, appID int64, privateKeyFi
 		return nil, fmt.Errorf("could not read private key: %s", err)
 	}
 	return NewAppsTransport(tr, appID, privateKey)
+}
+
+// NewAppsTransportKeyFromEnv returns a AppsTransport using a private key from environment variable.
+func NewAppsTransportKeyFromEnv(tr http.RoundTripper, appID int64, privateKeyEnv string) (*AppsTransport, error) {
+	privateKey, ok := os.LookupEnv(privateKeyEnv)
+	if !ok {
+		return nil, fmt.Errorf("private key environment variable %s empty", privateKeyEnv)
+	}
+	return NewAppsTransport(tr, appID, []byte(privateKey))
 }
 
 // NewAppsTransport returns a AppsTransport using private key. The key is parsed
