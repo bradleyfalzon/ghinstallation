@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -343,4 +344,38 @@ func TestRefreshTokenWithTrailingSlashBaseURL(t *testing.T) {
 	if res.StatusCode != 200 {
 		t.Fatalf("Unexpected RoundTrip response code: %d", res.StatusCode)
 	}
+}
+
+func TestRoundTripperContract(t *testing.T) {
+	tr := &Transport{
+		token: &accessToken{
+			ExpiresAt: time.Now().Add(1 * time.Hour),
+			Token:     "42",
+		},
+		mu: &sync.Mutex{},
+		tr: roundTripperFunc(func(req *http.Request) (*http.Response, error) {
+			if auth := req.Header.Get("Authorization"); auth != "token 42" {
+				t.Errorf("got unexpected Authorization request header in parent RoundTripper: %q", auth)
+			}
+			return nil, nil
+		}),
+	}
+	req, err := http.NewRequest("GET", "http://localhost", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Authorization", "xxx")
+	_, err = tr.RoundTrip(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if accept := req.Header.Get("Authorization"); accept != "xxx" {
+		t.Errorf("got unexpected Authorization request header in caller: %q", accept)
+	}
+}
+
+type roundTripperFunc func(*http.Request) (*http.Response, error)
+
+func (fn roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
+	return fn(req)
 }
