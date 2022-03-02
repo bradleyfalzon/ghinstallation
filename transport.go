@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/go-github/v41/github"
+	"github.com/google/go-github/v43/github"
 )
 
 const (
