@@ -119,7 +119,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			}
 		}()
 	}
-	
+
 	token, err := t.Token(req.Context())
 	if err != nil {
 		return nil, err
@@ -128,7 +128,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	creq := cloneRequest(req) // per RoundTripper contract
 	creq.Header.Set("Authorization", "token "+token)
 	creq.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
-	reqBodyClosed = true // req.Body is assumed to be closed by the tr RoundTripper.
+	reqBodyClosed = true                    // req.Body is assumed to be closed by the tr RoundTripper.
 	resp, err := t.tr.RoundTrip(creq)
 	return resp, err
 }
@@ -138,7 +138,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 func (t *Transport) Token(ctx context.Context) (string, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if t.token == nil || t.token.ExpiresAt.Add(-time.Minute).Before(time.Now()) {
+	if t.token == nil || t.token.ExpiresAt.Add(-15*time.Minute).Before(time.Now()) {
 		// Token is not set or expired/nearly expired, so refresh
 		if err := t.refreshToken(ctx); err != nil {
 			return "", fmt.Errorf("could not refresh installation id %v's token: %w", t.installationID, err)
