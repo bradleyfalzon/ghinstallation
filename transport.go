@@ -149,11 +149,11 @@ func (t *Transport) Token(ctx context.Context) (string, error) {
 }
 
 // ExpiresAt returns when the transport token expires.
-func (t *Transport) ExpiresAt() (time.Time) {
+func (t *Transport) ExpiresAt() (time.Time, error) {
 	if t.token == nil {
-		return nil
+		return time.Time{}, fmt.Errorf("ExpiresAt() = nil, err: nil token")
 	}
-	return t.token.ExpiresAt
+	return t.token.ExpiresAt, nil
 }
 
 // Permissions returns a transport token's GitHub installation permissions.
