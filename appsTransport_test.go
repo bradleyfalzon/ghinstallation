@@ -105,3 +105,35 @@ func TestJWTExpiry(t *testing.T) {
 		t.Fatalf("error calling RoundTrip: %v", err)
 	}
 }
+
+func TestCustomSigner(t *testing.T) {
+	check := RoundTrip{
+		rt: func(req *http.Request) (*http.Response, error) {
+			h, ok := req.Header["Authorization"]
+			if !ok {
+				t.Error("Header Accept not set")
+			}
+			want := []string{"Bearer hunter2"}
+			if diff := cmp.Diff(want, h); diff != "" {
+				t.Errorf("HTTP Accept headers want->got: %s", diff)
+			}
+			return nil, nil
+		},
+	}
+
+	tr, err := NewAppsTransportWithOptions(check, appID, WithSigner(&noopSigner{}))
+	if err != nil {
+		t.Fatalf("NewAppsTransportWithOptions: %v", err)
+	}
+
+	req := httptest.NewRequest(http.MethodGet, "http://example.com", new(bytes.Buffer))
+	if _, err := tr.RoundTrip(req); err != nil {
+		t.Fatalf("error calling RoundTrip: %v", err)
+	}
+}
+
+type noopSigner struct{}
+
+func (noopSigner) Sign(jwt.Claims) (string, error) {
+	return "hunter2", nil
+}
