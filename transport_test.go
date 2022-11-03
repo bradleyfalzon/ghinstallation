@@ -177,6 +177,18 @@ func TestNew_appendHeader(t *testing.T) {
 	if !found {
 		t.Errorf("could not find %v in request's accept headers: %v", myheader, headers["Accept"])
 	}
+
+	// Here we test that there isn't a second Accept header.
+	// Though the Accept header 'application/vnd.github.v3+json' is used for most
+	//  interactions with the GitHub API, having this header will force the
+	//  GitHub API response as JSON, which we don't want when downloading a
+	//  release (octet-stream)
+	for _, v := range headers["Accept"] {
+		if v == acceptHeader {
+			t.Errorf("accept header '%s' should not be present when accept header '%s' is set: %v", acceptHeader, myheader, headers["Accept"])
+			break
+		}
+	}
 }
 
 func TestRefreshTokenWithParameters(t *testing.T) {

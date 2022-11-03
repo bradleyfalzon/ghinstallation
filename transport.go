@@ -119,7 +119,7 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			}
 		}()
 	}
-	
+
 	token, err := t.Token(req.Context())
 	if err != nil {
 		return nil, err
@@ -127,7 +127,10 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 	creq := cloneRequest(req) // per RoundTripper contract
 	creq.Header.Set("Authorization", "token "+token)
-	creq.Header.Add("Accept", acceptHeader) // We add to "Accept" header to avoid overwriting existing req headers.
+
+	if creq.Header.Get("Accept") == "" { // We only add an "Accept" header to avoid overwriting the expected behavior.
+		creq.Header.Add("Accept", acceptHeader)
+	}
 	reqBodyClosed = true // req.Body is assumed to be closed by the tr RoundTripper.
 	resp, err := t.tr.RoundTrip(creq)
 	return resp, err
