@@ -395,14 +395,16 @@ func (fn roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) 
 func TestExpiryAccessor(t *testing.T) {
 	now := time.Now()
 	future := now.Add(2 * time.Hour)
+	futureRefresh := future.Add(-time.Minute)
 	past := now.Add(-2 * time.Hour)
+	pastRefresh := past.Add(-time.Minute)
 
 	for _, tc := range []struct {
 		name          string
 		token         *accessToken
 		expectErr     string
 		expectExpiry  time.Time
-		expectExpired bool
+		expectRefresh time.Time
 	}{
 		{
 			name: "valid",
@@ -411,7 +413,7 @@ func TestExpiryAccessor(t *testing.T) {
 				ExpiresAt: future,
 			},
 			expectExpiry:  future,
-			expectExpired: false,
+			expectRefresh: futureRefresh,
 		},
 		{
 			name: "expired",
@@ -420,17 +422,16 @@ func TestExpiryAccessor(t *testing.T) {
 				ExpiresAt: past,
 			},
 			expectExpiry:  past,
-			expectExpired: true,
+			expectRefresh: pastRefresh,
 		},
 		{
-			name:          "unset",
-			expectErr:     "Expiry() = unknown, err: nil token",
-			expectExpired: true,
+			name:      "unset",
+			expectErr: "Expiry() = unknown, err: nil token",
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tr := &Transport{token: tc.token}
-			expAt, expired, err := tr.Expiry()
+			expiresAt, refreshAt, err := tr.Expiry()
 			if err != nil {
 				if tc.expectErr != err.Error() {
 					t.Errorf("wrong error, expected=%q, actual=%q",
@@ -441,13 +442,13 @@ func TestExpiryAccessor(t *testing.T) {
 					t.Fatalf("unexpected error: %v", err)
 				}
 			}
-			if tc.expectExpiry != expAt {
-				t.Errorf("expiry mismatch, expected=%v, actual=%v",
-					tc.expectExpiry.String(), expAt.String())
+			if tc.expectExpiry != expiresAt {
+				t.Errorf("expiresAt mismatch, expected=%v, actual=%v",
+					tc.expectExpiry.String(), expiresAt.String())
 			}
-			if tc.expectExpired != expired {
-				t.Errorf("expired flag mismatch, expected=%v, actual=%v",
-					tc.expectExpired, expired)
+			if tc.expectRefresh != refreshAt {
+				t.Errorf("refreshAt mismatch, expected=%v, actual=%v",
+					tc.expectRefresh, refreshAt)
 			}
 		})
 	}

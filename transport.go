@@ -137,8 +137,12 @@ func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
+func (at *accessToken) getRefreshTime() time.Time {
+	return at.ExpiresAt.Add(-time.Minute)
+}
+
 func (at *accessToken) isExpired() bool {
-	return at == nil || at.ExpiresAt.Add(-time.Minute).Before(time.Now())
+	return at == nil || at.getRefreshTime().Before(time.Now())
 }
 
 // Token checks the active token expiration and renews if necessary. Token returns
@@ -172,12 +176,14 @@ func (t *Transport) Repositories() ([]github.Repository, error) {
 	return t.token.Repositories, nil
 }
 
-// Expiry returns a transport token's expiration time and current expiration status.
-func (t *Transport) Expiry() (expiresAt time.Time, expired bool, err error) {
+// Expiry returns a transport token's expiration time and refresh time. There is a small grace period
+// built in where a token will be refreshed before it expires. expiresAt is the actual token expiry,
+// and refreshAt is when a call to Token() will cause it to be refreshed.
+func (t *Transport) Expiry() (expiresAt time.Time, refreshAt time.Time, err error) {
 	if t.token == nil {
-		return time.Time{}, true, errors.New("Expiry() = unknown, err: nil token")
+		return time.Time{}, time.Time{}, errors.New("Expiry() = unknown, err: nil token")
 	}
-	return t.token.ExpiresAt, t.token.isExpired(), nil
+	return t.token.ExpiresAt, t.token.getRefreshTime(), nil
 }
 
 func (t *Transport) refreshToken(ctx context.Context) error {
