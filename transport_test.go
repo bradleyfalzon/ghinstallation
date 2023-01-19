@@ -391,3 +391,64 @@ type roundTripperFunc func(*http.Request) (*http.Response, error)
 func (fn roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return fn(req)
 }
+
+func TestExpiryAccessor(t *testing.T) {
+	now := time.Now()
+	future := now.Add(2 * time.Hour)
+	past := now.Add(-2 * time.Hour)
+
+	for _, tc := range []struct {
+		name          string
+		token         *accessToken
+		expectErr     string
+		expectExpiry  time.Time
+		expectExpired bool
+	}{
+		{
+			name: "valid",
+			token: &accessToken{
+				Token:     token,
+				ExpiresAt: future,
+			},
+			expectExpiry:  future,
+			expectExpired: false,
+		},
+		{
+			name: "expired",
+			token: &accessToken{
+				Token:     token,
+				ExpiresAt: past,
+			},
+			expectExpiry:  past,
+			expectExpired: true,
+		},
+		{
+			name:          "unset",
+			expectErr:     "Expiry() = unknown, err: nil token",
+			expectExpired: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tr := &Transport{token: tc.token}
+			expAt, expired, err := tr.Expiry()
+			if err != nil {
+				if tc.expectErr != err.Error() {
+					t.Errorf("wrong error, expected=%q, actual=%q",
+						tc.expectErr, err.Error())
+				}
+			} else {
+				if tc.expectErr != "" {
+					t.Fatalf("unexpected error: %v", err)
+				}
+			}
+			if tc.expectExpiry != expAt {
+				t.Errorf("expiry mismatch, expected=%v, actual=%v",
+					tc.expectExpiry.String(), expAt.String())
+			}
+			if tc.expectExpired != expired {
+				t.Errorf("expired flag mismatch, expected=%v, actual=%v",
+					tc.expectExpired, expired)
+			}
+		})
+	}
+}
