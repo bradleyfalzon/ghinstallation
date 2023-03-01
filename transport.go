@@ -67,12 +67,12 @@ func (e *HTTPError) Error() string {
 var _ http.RoundTripper = &Transport{}
 
 // NewKeyFromFile returns a Transport using a private key from file.
-func NewKeyFromFile(tr http.RoundTripper, appID, installationID int64, privateKeyFile string) (*Transport, error) {
+func NewKeyFromFile(tr http.RoundTripper, appID, installationID int64, privateKeyFile string, baseURL string) (*Transport, error) {
 	privateKey, err := ioutil.ReadFile(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read private key: %s", err)
 	}
-	return New(tr, appID, installationID, privateKey)
+	return New(tr, appID, installationID, privateKey, baseURL)
 }
 
 // Client is a HTTP client which sends a http.Request and returns a http.Response
@@ -88,8 +88,8 @@ type Client interface {
 // installations to ensure reuse of underlying TCP connections.
 //
 // The returned Transport's RoundTrip method is safe to be used concurrently.
-func New(tr http.RoundTripper, appID, installationID int64, privateKey []byte) (*Transport, error) {
-	atr, err := NewAppsTransport(tr, appID, privateKey)
+func New(tr http.RoundTripper, appID, installationID int64, privateKey []byte, baseURL string) (*Transport, error) {
+	atr, err := NewAppsTransport(tr, appID, privateKey, baseURL)
 	if err != nil {
 		return nil, err
 	}

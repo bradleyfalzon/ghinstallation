@@ -28,7 +28,7 @@ func TestNewAppsTransportKeyFromFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = NewAppsTransportKeyFromFile(&http.Transport{}, appID, tmpfile.Name())
+	_, err = NewAppsTransportKeyFromFile(&http.Transport{}, appID, tmpfile.Name(), "")
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
@@ -58,7 +58,7 @@ func TestAppsTransport(t *testing.T) {
 		},
 	}
 
-	tr, err := NewAppsTransport(check, appID, key)
+	tr, err := NewAppsTransport(check, appID, key, "")
 	if err != nil {
 		t.Fatalf("error creating transport: %v", err)
 	}
@@ -98,7 +98,7 @@ func TestJWTExpiry(t *testing.T) {
 		},
 	}
 
-	tr := NewAppsTransportFromPrivateKey(check, appID, key)
+	tr := NewAppsTransportFromPrivateKey(check, appID, key, "")
 	req := httptest.NewRequest(http.MethodGet, "http://example.com", new(bytes.Buffer))
 	req.Header.Add("Accept", customHeader)
 	if _, err := tr.RoundTrip(req); err != nil {

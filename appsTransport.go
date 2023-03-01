@@ -28,12 +28,12 @@ type AppsTransport struct {
 }
 
 // NewAppsTransportKeyFromFile returns a AppsTransport using a private key from file.
-func NewAppsTransportKeyFromFile(tr http.RoundTripper, appID int64, privateKeyFile string) (*AppsTransport, error) {
+func NewAppsTransportKeyFromFile(tr http.RoundTripper, appID int64, privateKeyFile string, baseURL string) (*AppsTransport, error) {
 	privateKey, err := ioutil.ReadFile(privateKeyFile)
 	if err != nil {
 		return nil, fmt.Errorf("could not read private key: %s", err)
 	}
-	return NewAppsTransport(tr, appID, privateKey)
+	return NewAppsTransport(tr, appID, privateKey, baseURL)
 }
 
 // NewAppsTransport returns a AppsTransport using private key. The key is parsed
@@ -43,18 +43,21 @@ func NewAppsTransportKeyFromFile(tr http.RoundTripper, appID int64, privateKeyFi
 // installations to ensure reuse of underlying TCP connections.
 //
 // The returned Transport's RoundTrip method is safe to be used concurrently.
-func NewAppsTransport(tr http.RoundTripper, appID int64, privateKey []byte) (*AppsTransport, error) {
+func NewAppsTransport(tr http.RoundTripper, appID int64, privateKey []byte, baseURL string) (*AppsTransport, error) {
 	key, err := jwt.ParseRSAPrivateKeyFromPEM(privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("could not parse private key: %s", err)
 	}
-	return NewAppsTransportFromPrivateKey(tr, appID, key), nil
+	return NewAppsTransportFromPrivateKey(tr, appID, key, baseURL), nil
 }
 
 // NewAppsTransportFromPrivateKey returns an AppsTransport using a crypto/rsa.(*PrivateKey).
-func NewAppsTransportFromPrivateKey(tr http.RoundTripper, appID int64, key *rsa.PrivateKey) *AppsTransport {
+func NewAppsTransportFromPrivateKey(tr http.RoundTripper, appID int64, key *rsa.PrivateKey, baseURL string) *AppsTransport {
+	if baseURL == "" {
+		baseURL = apiBaseURL
+	}
 	return &AppsTransport{
-		BaseURL: apiBaseURL,
+		BaseURL: baseURL,
 		Client:  &http.Client{Transport: tr},
 		tr:      tr,
 		key:     key,
