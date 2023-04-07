@@ -3,6 +3,7 @@ package ghinstallation
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -451,5 +452,17 @@ func TestExpiryAccessor(t *testing.T) {
 					tc.expectRefresh, refreshAt)
 			}
 		})
+	}
+}
+
+func TestHTTPErrorUnwrap(t *testing.T) {
+	wrappedError := errors.New("wrapped error")
+
+	err := &HTTPError{
+		RootCause: wrappedError,
+	}
+
+	if !errors.Is(err, wrappedError) {
+		t.Errorf("HTTPError should be unwrapped to the root cause")
 	}
 }
