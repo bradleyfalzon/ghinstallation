@@ -63,6 +63,10 @@ func TestAppsTransport(t *testing.T) {
 		t.Fatalf("error creating transport: %v", err)
 	}
 
+	if tr.appID != appID {
+		t.Errorf("appID want->got: %d->%d", appID, tr.appID)
+	}
+
 	req := httptest.NewRequest(http.MethodGet, "http://example.com", new(bytes.Buffer))
 	req.Header.Add("Accept", customHeader)
 	if _, err := tr.RoundTrip(req); err != nil {

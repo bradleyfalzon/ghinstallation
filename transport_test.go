@@ -83,6 +83,15 @@ func TestNew(t *testing.T) {
 	}
 	tr.BaseURL = ts.URL
 
+	// test id getter methods
+	if tr.AppID() != appID {
+		t.Fatalf("appID got: %q want: %q", tr.AppID(), appID)
+	}
+
+	if tr.InstallationID() != installationID {
+		t.Fatalf("installationID got: %q want: %q", tr.InstallationID(), installationID)
+	}
+
 	client := http.Client{Transport: tr}
 	_, err = client.Get(ts.URL + "/auth/with/installation/token/endpoint")
 	if err != nil {
