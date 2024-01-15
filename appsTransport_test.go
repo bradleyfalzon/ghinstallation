@@ -3,7 +3,6 @@ package ghinstallation
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -15,7 +14,7 @@ import (
 )
 
 func TestNewAppsTransportKeyFromFile(t *testing.T) {
-	tmpfile, err := ioutil.TempFile("", "example")
+	tmpfile, err := os.TempFile("", "example")
 	if err != nil {
 		t.Fatal(err)
 	}

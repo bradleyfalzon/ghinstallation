@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -15,7 +14,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-github/v57/github"
+	"github.com/google/go-github/v58/github"
 )
 
 const (
@@ -129,7 +128,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestNewKeyFromFile(t *testing.T) {
-	tmpfile, err := ioutil.TempFile("", "example")
+	tmpfile, err := os.TempFile("", "example")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -168,7 +167,7 @@ func TestNew_appendHeader(t *testing.T) {
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
-	tr.BaseURL = ts.URL
+	itr.BaseURL = ts.URL
 
 	client := http.Client{Transport: tr}
 	_, err = client.Do(req)
@@ -226,8 +225,8 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 		rt: func(req *http.Request) (*http.Response, error) {
 			// Convert io.ReadCloser to String without deleting body data.
 			var gotBodyBytes []byte
-			gotBodyBytes, _ = ioutil.ReadAll(req.Body)
-			req.Body = ioutil.NopCloser(bytes.NewBuffer(gotBodyBytes))
+			gotBodyBytes, _ = os.ReadAll(req.Body)
+			req.Body = os.NopCloser(bytes.NewBuffer(gotBodyBytes))
 			gotBodyString := string(gotBodyBytes)
 
 			// Compare request sent with request received.
@@ -251,7 +250,7 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 			if err != nil {
 				return nil, fmt.Errorf("error converting token into io.ReadWriter: %+v", err)
 			}
-			tokenBody := ioutil.NopCloser(tokenReadWriter)
+			tokenBody := os.NopCloser(tokenReadWriter)
 			return &http.Response{
 				Body:       tokenBody,
 				StatusCode: 200,
@@ -295,22 +294,22 @@ func TestRefreshTokenWithTrailingSlashBaseURL(t *testing.T) {
 		rt: func(req *http.Request) (*http.Response, error) {
 			if strings.Contains(req.URL.Path, "//") {
 				return &http.Response{
-					Body:       ioutil.NopCloser(strings.NewReader("Forbidden\n")),
+					Body:       os.NopCloser(strings.NewReader("Forbidden\n")),
 					StatusCode: 401,
 				}, fmt.Errorf("Got simulated 401 Github Forbidden response")
 			}
 
 			if req.URL.Path == "test_endpoint/" && req.Header.Get("Authorization") == fmt.Sprintf("token %s", tokenToBe) {
 				return &http.Response{
-					Body:       ioutil.NopCloser(strings.NewReader("Beautiful\n")),
+					Body:       os.NopCloser(strings.NewReader("Beautiful\n")),
 					StatusCode: 200,
 				}, nil
 			}
 
 			// Convert io.ReadCloser to String without deleting body data.
 			var gotBodyBytes []byte
-			gotBodyBytes, _ = ioutil.ReadAll(req.Body)
-			req.Body = ioutil.NopCloser(bytes.NewBuffer(gotBodyBytes))
+			gotBodyBytes, _ = os.ReadAll(req.Body)
+			req.Body = os.NopCloser(bytes.NewBuffer(gotBodyBytes))
 			gotBodyString := string(gotBodyBytes)
 
 			// Compare request sent with request received.
@@ -334,7 +333,7 @@ func TestRefreshTokenWithTrailingSlashBaseURL(t *testing.T) {
 			if err != nil {
 				return nil, fmt.Errorf("error converting token into io.ReadWriter: %+v", err)
 			}
-			tokenBody := ioutil.NopCloser(tokenReadWriter)
+			tokenBody := os.NopCloser(tokenReadWriter)
 			return &http.Response{
 				Body:       tokenBody,
 				StatusCode: 200,
