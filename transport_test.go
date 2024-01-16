@@ -225,7 +225,7 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 		rt: func(req *http.Request) (*http.Response, error) {
 			// Convert io.ReadCloser to String without deleting body data.
 			var gotBodyBytes []byte
-			gotBodyBytes, _ = os.ReadAll(req.Body)
+			gotBodyBytes, _ = io.ReadAll(req.Body)
 			req.Body = io.NopCloser(bytes.NewBuffer(gotBodyBytes))
 			gotBodyString := string(gotBodyBytes)
 
