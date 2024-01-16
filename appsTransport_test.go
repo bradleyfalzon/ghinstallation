@@ -14,7 +14,7 @@ import (
 )
 
 func TestNewAppsTransportKeyFromFile(t *testing.T) {
-	tmpfile, err := os.TempFile("", "example")
+	tmpfile, err := os.CreateTemp(t.TempDir(), "example")
 	if err != nil {
 		t.Fatal(err)
 	}
