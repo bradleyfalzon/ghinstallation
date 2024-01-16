@@ -167,7 +167,7 @@ func TestNew_appendHeader(t *testing.T) {
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
-	itr.BaseURL = ts.URL
+	tr.BaseURL = ts.URL
 
 	client := http.Client{Transport: tr}
 	_, err = client.Do(req)
