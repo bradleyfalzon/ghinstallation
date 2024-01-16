@@ -226,7 +226,7 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 			// Convert io.ReadCloser to String without deleting body data.
 			var gotBodyBytes []byte
 			gotBodyBytes, _ = os.ReadAll(req.Body)
-			req.Body = os.NopCloser(bytes.NewBuffer(gotBodyBytes))
+			req.Body = io.NopCloser(bytes.NewBuffer(gotBodyBytes))
 			gotBodyString := string(gotBodyBytes)
 
 			// Compare request sent with request received.
