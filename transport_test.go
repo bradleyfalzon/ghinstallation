@@ -308,7 +308,7 @@ func TestRefreshTokenWithTrailingSlashBaseURL(t *testing.T) {
 
 			// Convert io.ReadCloser to String without deleting body data.
 			var gotBodyBytes []byte
-			gotBodyBytes, _ = os.ReadAll(req.Body)
+			gotBodyBytes, _ = io.ReadAll(req.Body)
 			req.Body = os.NopCloser(bytes.NewBuffer(gotBodyBytes))
 			gotBodyString := string(gotBodyBytes)
 
