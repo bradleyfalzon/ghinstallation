@@ -294,7 +294,7 @@ func TestRefreshTokenWithTrailingSlashBaseURL(t *testing.T) {
 		rt: func(req *http.Request) (*http.Response, error) {
 			if strings.Contains(req.URL.Path, "//") {
 				return &http.Response{
-					Body:       os.NopCloser(strings.NewReader("Forbidden\n")),
+					Body:       io.NopCloser(strings.NewReader("Forbidden\n")),
 					StatusCode: 401,
 				}, fmt.Errorf("Got simulated 401 Github Forbidden response")
 			}
