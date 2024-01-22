@@ -250,7 +250,7 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 			if err != nil {
 				return nil, fmt.Errorf("error converting token into io.ReadWriter: %+v", err)
 			}
-			tokenBody := os.NopCloser(tokenReadWriter)
+			tokenBody := io.NopCloser(tokenReadWriter)
 			return &http.Response{
 				Body:       tokenBody,
 				StatusCode: 200,
