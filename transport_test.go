@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -226,7 +227,6 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 			// Convert io.ReadCloser to String without deleting body data.
 			var gotBodyBytes []byte
 			gotBodyBytes, _ = io.ReadAll(req.Body)
-			req.Body = io.NopCloser(bytes.NewBuffer(gotBodyBytes))
 			gotBodyString := string(gotBodyBytes)
 
 			// Compare request sent with request received.
