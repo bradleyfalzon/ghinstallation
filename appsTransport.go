@@ -24,7 +24,7 @@ type AppsTransport struct {
 	BaseURL string            // BaseURL is the scheme and host for GitHub API, defaults to https://api.github.com
 	Client  Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
 	tr      http.RoundTripper // tr is the underlying roundtripper being wrapped
-	signer  Signer            // signer signs JWT tokens.
+	signer  SignerWithContext // signer signs JWT tokens.
 	appID   int64             // appID is the GitHub App's ID
 }
 
@@ -94,7 +94,7 @@ func (t *AppsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		Issuer:    strconv.FormatInt(t.appID, 10),
 	}
 
-	ss, err := t.signer.Sign(claims)
+	ss, err := t.signer.SignContext(req.Context(), claims)
 	if err != nil {
 		return nil, fmt.Errorf("could not sign jwt: %s", err)
 	}
@@ -113,8 +113,19 @@ func (t *AppsTransport) AppID() int64 {
 
 type AppsTransportOption func(*AppsTransport)
 
-// WithSigner configures the AppsTransport to use the given Signer for generating JWT tokens.
+// WithSigner configures the AppsTransport to use the given Signer for
+// generating JWT tokens.
+//
+// Deprecated: Use [WithContextSigner] instead.
 func WithSigner(signer Signer) AppsTransportOption {
+	return func(at *AppsTransport) {
+		at.signer = SignerWithContextAdapter{signer}
+	}
+}
+
+// WithContextSigner configures the AppsTransport to use the given Signer for
+// generating JWT tokens.
+func WithContextSigner(signer SignerWithContext) AppsTransportOption {
 	return func(at *AppsTransport) {
 		at.signer = signer
 	}
