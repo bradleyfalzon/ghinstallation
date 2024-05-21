@@ -1,6 +1,8 @@
 module github.com/bradleyfalzon/ghinstallation/v2
 
-go 1.13
+go 1.21
+
+toolchain go1.22.0
 
 require (
 	github.com/golang-jwt/jwt/v4 v4.5.0
