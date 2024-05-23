@@ -30,11 +30,11 @@ type AppsTransport struct {
 
 // NewAppsTransportKeyFromFile returns a AppsTransport using a private key from file.
 func NewAppsTransportKeyFromFile(tr http.RoundTripper, appID int64, privateKeyFile string) (*AppsTransport, error) {
-	privateKey, err := ioutil.ReadFile(privateKeyFile)
-	if err != nil {
-		return nil, fmt.Errorf("could not read private key: %s", err)
-	}
-	return NewAppsTransport(tr, appID, privateKey)
+	return NewAppsTransportWithAllOptions(
+		tr,
+		WithAppID(appID),
+		WithPrivateKeyFile(privateKeyFile),
+	)
 }
 
 // NewAppsTransport returns a AppsTransport using private key. The key is parsed
@@ -45,22 +45,22 @@ func NewAppsTransportKeyFromFile(tr http.RoundTripper, appID int64, privateKeyFi
 //
 // The returned Transport's RoundTrip method is safe to be used concurrently.
 func NewAppsTransport(tr http.RoundTripper, appID int64, privateKey []byte) (*AppsTransport, error) {
-	key, err := jwt.ParseRSAPrivateKeyFromPEM(privateKey)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse private key: %s", err)
-	}
-	return NewAppsTransportFromPrivateKey(tr, appID, key), nil
+	return NewAppsTransportWithAllOptions(
+		tr,
+		WithAppID(appID),
+		WithPrivateKeyRaw(privateKey),
+	)
 }
 
 // NewAppsTransportFromPrivateKey returns an AppsTransport using a crypto/rsa.(*PrivateKey).
 func NewAppsTransportFromPrivateKey(tr http.RoundTripper, appID int64, key *rsa.PrivateKey) *AppsTransport {
-	return &AppsTransport{
-		BaseURL: apiBaseURL,
-		Client:  &http.Client{Transport: tr},
-		tr:      tr,
-		signer:  NewRSASigner(jwt.SigningMethodRS256, key),
-		appID:   appID,
-	}
+	t, _ := NewAppsTransportWithAllOptions(
+		tr,
+		WithAppID(appID),
+		WithPrivateKey(key),
+	)
+
+	return t
 }
 
 func NewAppsTransportWithOptions(tr http.RoundTripper, appID int64, opts ...AppsTransportOption) (*AppsTransport, error) {
@@ -70,8 +70,34 @@ func NewAppsTransportWithOptions(tr http.RoundTripper, appID int64, opts ...Apps
 		tr:      tr,
 		appID:   appID,
 	}
+
 	for _, fn := range opts {
 		fn(t)
+	}
+
+	if t.signer == nil {
+		return nil, errors.New("no signer provided")
+	}
+
+	return t, nil
+}
+
+func NewAppsTransportWithAllOptions(tr http.RoundTripper, opts ...AppsTransportOptionError) (*AppsTransport, error) {
+	t := &AppsTransport{
+		BaseURL: apiBaseURL,
+		Client:  &http.Client{Transport: tr},
+		tr:      tr,
+	}
+
+	for _, fn := range opts {
+		err := fn(t)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if t.appID == 0 {
+		return nil, errors.New("no appID provided")
 	}
 
 	if t.signer == nil {
@@ -112,6 +138,46 @@ func (t *AppsTransport) AppID() int64 {
 }
 
 type AppsTransportOption func(*AppsTransport)
+type AppsTransportOptionError func(*AppsTransport) error
+
+func WithAppID(appID int64) AppsTransportOptionError {
+	return func(at *AppsTransport) error {
+		at.appID = appID
+
+		return nil
+	}
+}
+
+func WithPrivateKeyFile(privateKeyFile string) AppsTransportOptionError {
+	return func(at *AppsTransport) error {
+		// deprecated function kept for go 1.13 compatibility
+		privateKey, err := ioutil.ReadFile(privateKeyFile)
+		if err != nil {
+			return fmt.Errorf("could not read private key: %w", err)
+		}
+
+		return WithPrivateKeyRaw(privateKey)(at)
+	}
+}
+
+func WithPrivateKeyRaw(key []byte) AppsTransportOptionError {
+	return func(at *AppsTransport) error {
+		key, err := jwt.ParseRSAPrivateKeyFromPEM(key)
+		if err != nil {
+			return fmt.Errorf("could not parse private key: %w", err)
+		}
+
+		return WithPrivateKey(key)(at)
+	}
+}
+
+func WithPrivateKey(key *rsa.PrivateKey) AppsTransportOptionError {
+	return func(at *AppsTransport) error {
+		at.signer = NewRSASigner(jwt.SigningMethodRS256, key)
+
+		return nil
+	}
+}
 
 // WithSigner configures the AppsTransport to use the given Signer for generating JWT tokens.
 func WithSigner(signer Signer) AppsTransportOption {
