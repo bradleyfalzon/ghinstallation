@@ -25,7 +25,11 @@ type AppsTransport struct {
 	Client  Client            // Client to use to refresh tokens, defaults to http.Client with provided transport
 	tr      http.RoundTripper // tr is the underlying roundtripper being wrapped
 	signer  Signer            // signer signs JWT tokens.
-	appID   int64             // appID is the GitHub App's ID
+	issuer  string            // issuer is the ClientID (preferred) or AppID (legacy) of the GitHub App
+	// appID is the GitHub App's ID
+	//
+	// deprecated: kept only for backwards compatibility.
+	appID int64
 }
 
 // NewAppsTransportKeyFromFile returns a AppsTransport using a private key from file.
@@ -63,12 +67,14 @@ func NewAppsTransportFromPrivateKey(tr http.RoundTripper, appID int64, key *rsa.
 	return t
 }
 
+// deprecated: use NewAppsTransportWithAllOptions instead
 func NewAppsTransportWithOptions(tr http.RoundTripper, appID int64, opts ...AppsTransportOption) (*AppsTransport, error) {
 	t := &AppsTransport{
 		BaseURL: apiBaseURL,
 		Client:  &http.Client{Transport: tr},
 		tr:      tr,
 		appID:   appID,
+		//fixme
 	}
 
 	for _, fn := range opts {
@@ -96,8 +102,8 @@ func NewAppsTransportWithAllOptions(tr http.RoundTripper, opts ...AppsTransportO
 		}
 	}
 
-	if t.appID == 0 {
-		return nil, errors.New("no appID provided")
+	if t.issuer == "" {
+		return nil, errors.New("no appID or clientID provided")
 	}
 
 	if t.signer == nil {
@@ -117,7 +123,7 @@ func (t *AppsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	claims := &jwt.RegisteredClaims{
 		IssuedAt:  jwt.NewNumericDate(iss),
 		ExpiresAt: jwt.NewNumericDate(exp),
-		Issuer:    strconv.FormatInt(t.appID, 10),
+		Issuer:    t.issuer,
 	}
 
 	ss, err := t.signer.Sign(claims)
@@ -132,18 +138,41 @@ func (t *AppsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
-// AppID returns the appID of the transport
+// AppID returns the appID of the transport. This will return 0 if the transport
+// is using a ClientID.
+//
+// Deprecated: use [Issuer()] instead
 func (t *AppsTransport) AppID() int64 {
 	return t.appID
 }
 
+// Issuer returns the appID or clientID of the GitHub app used by this
+// transport.
+func (t *AppsTransport) Issuer() string {
+	return t.issuer
+}
+
+// deprecated: kept only for backwards compatibility.
 type AppsTransportOption func(*AppsTransport)
 type AppsTransportOptionError func(*AppsTransport) error
 
+// Specify the AppID of the GitHub App. Either this or ClientID must be
+// specified, but ClientID is now preferred.
 func WithAppID(appID int64) AppsTransportOptionError {
 	return func(at *AppsTransport) error {
+		// backwards compatibility to support the AppID() getter
 		at.appID = appID
+		at.issuer = strconv.FormatInt(appID, 10)
 
+		return nil
+	}
+}
+
+// Specify the ClientID of the GitHub App. Either this or AppID must be
+// specified, but ClientID is now preferred.
+func WithClientID(clientID string) AppsTransportOptionError {
+	return func(at *AppsTransport) error {
+		at.issuer = clientID
 		return nil
 	}
 }
