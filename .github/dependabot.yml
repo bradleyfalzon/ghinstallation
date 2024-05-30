@@ -4,6 +4,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    groups:
+      gomod:
+        update-types:
+          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: "/"
