@@ -4,8 +4,8 @@ import (
 	"crypto/rsa"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -179,10 +179,9 @@ func WithClientID(clientID string) AppsTransportOptionError {
 
 func WithPrivateKeyFile(privateKeyFile string) AppsTransportOptionError {
 	return func(at *AppsTransport) error {
-		// deprecated function kept for go 1.13 compatibility
-		privateKey, err := ioutil.ReadFile(privateKeyFile)
+		privateKey, err := os.ReadFile(privateKeyFile)
 		if err != nil {
-			return fmt.Errorf("could not read private key: %w", err)
+			return fmt.Errorf("could not read private key: %s", err)
 		}
 
 		return WithPrivateKeyRaw(privateKey)(at)
