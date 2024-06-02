@@ -139,7 +139,7 @@ func TestCustomSigner(t *testing.T) {
 
 			req := httptest.NewRequest(http.MethodGet, "http://example.com", new(bytes.Buffer))
 			req = req.WithContext(
-				context.WithValue(context.Background(), contextSignerKey("test"), c.bearerSuffix),
+				context.WithValue(context.Background(), contextSignerKey(struct{}{}), c.bearerSuffix),
 			)
 
 			if _, err := tr.RoundTrip(req); err != nil {
@@ -158,7 +158,7 @@ func TestCustomSigner(t *testing.T) {
 	}
 }
 
-type contextSignerKey string
+type contextSignerKey struct{}
 
 type noopSigner struct{}
 
@@ -168,7 +168,7 @@ func (noopSigner) Sign(jwt.Claims) (string, error) {
 
 func (noopSigner) SignContext(ctx context.Context, _ jwt.Claims) (string, error) {
 	// mark the returned token with the context suffix expected by the test
-	v := ctx.Value(contextSignerKey("test"))
+	v := ctx.Value(contextSignerKey(struct{}{}))
 	return fmt.Sprintf("hunter2%v", v), nil
 }
 
