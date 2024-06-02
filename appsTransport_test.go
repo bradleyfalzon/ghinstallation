@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -16,7 +15,7 @@ import (
 )
 
 func TestNewAppsTransportKeyFromFile(t *testing.T) {
-	tmpfile, err := ioutil.TempFile("", "example")
+	tmpfile, err := os.CreateTemp("", "example")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,7 +84,7 @@ func TestJWTExpiry(t *testing.T) {
 	check := RoundTrip{
 		rt: func(req *http.Request) (*http.Response, error) {
 			token := strings.Fields(req.Header.Get("Authorization"))[1]
-			tok, err := jwt.ParseWithClaims(token, &jwt.StandardClaims{}, func(t *jwt.Token) (interface{}, error) {
+			tok, err := jwt.ParseWithClaims(token, &jwt.RegisteredClaims{}, func(t *jwt.Token) (interface{}, error) {
 				if t.Header["alg"] != "RS256" {
 					return nil, fmt.Errorf("unexpected signing method: %v, expected: %v", t.Header["alg"], "RS256")
 				}
@@ -95,8 +94,8 @@ func TestJWTExpiry(t *testing.T) {
 				t.Fatalf("jwt parse: %v", err)
 			}
 
-			c := tok.Claims.(*jwt.StandardClaims)
-			if c.ExpiresAt == 0 {
+			c := tok.Claims.(*jwt.RegisteredClaims)
+			if c.ExpiresAt.IsZero() {
 				t.Fatalf("missing exp claim")
 			}
 			return nil, nil
