@@ -205,8 +205,8 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 	installationTokenOptions := &github.InstallationTokenOptions{
 		RepositoryIDs: []int64{1234},
 		Permissions: &github.InstallationPermissions{
-			Contents: github.String("write"),
-			Issues:   github.String("read"),
+			Contents: github.Ptr("write"),
+			Issues:   github.Ptr("read"),
 		},
 	}
 
@@ -219,14 +219,15 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 	// Convert io.ReadWriter to String without deleting body data.
 	wantBody, _ := GetReadWriter(installationTokenOptions)
 	wantBodyBytes := new(bytes.Buffer)
-	wantBodyBytes.ReadFrom(wantBody)
+	if _, err := wantBodyBytes.ReadFrom(wantBody); err != nil {
+		t.Fatalf("error reading from wantBody: %v", err)
+	}
 	wantBodyString := wantBodyBytes.String()
 
 	roundTripper := RoundTrip{
 		rt: func(req *http.Request) (*http.Response, error) {
 			// Convert io.ReadCloser to String without deleting body data.
-			var gotBodyBytes []byte
-			gotBodyBytes, _ = io.ReadAll(req.Body)
+			gotBodyBytes, _ := io.ReadAll(req.Body)
 			req.Body = io.NopCloser(bytes.NewBuffer(gotBodyBytes))
 			gotBodyString := string(gotBodyBytes)
 
@@ -240,11 +241,11 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 				Token:     "token_string",
 				ExpiresAt: time.Now(),
 				Repositories: []github.Repository{{
-					ID: github.Int64(1234),
+					ID: github.Ptr(int64(1234)),
 				}},
 				Permissions: github.InstallationPermissions{
-					Contents: github.String("write"),
-					Issues:   github.String("read"),
+					Contents: github.Ptr("write"),
+					Issues:   github.Ptr("read"),
 				},
 			}
 			tokenReadWriter, err := GetReadWriter(accessToken)
@@ -265,7 +266,9 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 	}
 	tr.InstallationTokenOptions = installationTokenOptions
 
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/app/installations/%v/access_tokens", tr.BaseURL, tr.installationID), body)
+	req, err := http.NewRequest("POST",
+		fmt.Sprintf("%s/app/installations/%v/access_tokens", tr.BaseURL, tr.installationID),
+		body)
 	if err != nil {
 		t.Fatal("unexpected error:", err)
 	}
@@ -278,8 +281,8 @@ func TestRefreshTokenWithTrailingSlashBaseURL(t *testing.T) {
 	installationTokenOptions := &github.InstallationTokenOptions{
 		RepositoryIDs: []int64{1234},
 		Permissions: &github.InstallationPermissions{
-			Contents: github.String("write"),
-			Issues:   github.String("read"),
+			Contents: github.Ptr("write"),
+			Issues:   github.Ptr("read"),
 		},
 	}
 
@@ -288,7 +291,9 @@ func TestRefreshTokenWithTrailingSlashBaseURL(t *testing.T) {
 	// Convert io.ReadWriter to String without deleting body data.
 	wantBody, _ := GetReadWriter(installationTokenOptions)
 	wantBodyBytes := new(bytes.Buffer)
-	wantBodyBytes.ReadFrom(wantBody)
+	if _, err := wantBodyBytes.ReadFrom(wantBody); err != nil {
+		t.Fatalf("error reading from wantBody: %v", err)
+	}
 	wantBodyString := wantBodyBytes.String()
 
 	roundTripper := RoundTrip{
@@ -308,8 +313,7 @@ func TestRefreshTokenWithTrailingSlashBaseURL(t *testing.T) {
 			}
 
 			// Convert io.ReadCloser to String without deleting body data.
-			var gotBodyBytes []byte
-			gotBodyBytes, _ = io.ReadAll(req.Body)
+			gotBodyBytes, _ := io.ReadAll(req.Body)
 			req.Body = io.NopCloser(bytes.NewBuffer(gotBodyBytes))
 			gotBodyString := string(gotBodyBytes)
 
@@ -323,11 +327,11 @@ func TestRefreshTokenWithTrailingSlashBaseURL(t *testing.T) {
 				Token:     tokenToBe,
 				ExpiresAt: time.Now(),
 				Repositories: []github.Repository{{
-					ID: github.Int64(1234),
+					ID: github.Ptr(int64(1234)),
 				}},
 				Permissions: github.InstallationPermissions{
-					Contents: github.String("write"),
-					Issues:   github.String("read"),
+					Contents: github.Ptr("write"),
+					Issues:   github.Ptr("read"),
 				},
 			}
 			tokenReadWriter, err := GetReadWriter(accessToken)
