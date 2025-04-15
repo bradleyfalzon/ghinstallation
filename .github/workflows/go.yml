@@ -8,6 +8,8 @@ on:
     branches:
       - master
 
+permissions: {}
+
 jobs:
   build:
     name: Build
@@ -20,6 +22,8 @@ jobs:
           - '1.22'
           - '1.23'
           - '1.24'
+    permissions:
+      contents: read
 
     steps:
       - name: Set up Go ${{ matrix.go-version }}
