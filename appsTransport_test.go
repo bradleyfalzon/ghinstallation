@@ -2,6 +2,7 @@ package ghinstallation
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -110,33 +111,76 @@ func TestJWTExpiry(t *testing.T) {
 }
 
 func TestCustomSigner(t *testing.T) {
-	check := RoundTrip{
-		rt: func(req *http.Request) (*http.Response, error) {
-			h, ok := req.Header["Authorization"]
-			if !ok {
-				t.Error("Header Accept not set")
-			}
-			want := []string{"Bearer hunter2"}
-			if diff := cmp.Diff(want, h); diff != "" {
-				t.Errorf("HTTP Accept headers want->got: %s", diff)
-			}
-			return nil, nil
+	tc := []struct {
+		nm           string
+		option       AppsTransportOption
+		bearerSuffix string
+	}{
+		{
+			nm:           "context-free signer",
+			option:       WithSigner(&noopSigner{}),
+			bearerSuffix: "",
+		},
+		{
+			nm:           "context signer",
+			option:       WithContextSigner(&noopSigner{}),
+			bearerSuffix: ":context",
 		},
 	}
 
-	tr, err := NewAppsTransportWithOptions(check, appID, WithSigner(&noopSigner{}))
-	if err != nil {
-		t.Fatalf("NewAppsTransportWithOptions: %v", err)
-	}
+	for _, c := range tc {
+		t.Run(c.nm, func(t *testing.T) {
+			check := AuthCaptureRoundTripper{}
 
-	req := httptest.NewRequest(http.MethodGet, "http://example.com", new(bytes.Buffer))
-	if _, err := tr.RoundTrip(req); err != nil {
-		t.Fatalf("error calling RoundTrip: %v", err)
+			tr, err := NewAppsTransportWithOptions(&check, appID, c.option)
+			if err != nil {
+				t.Fatalf("NewAppsTransportWithOptions: %v", err)
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "http://example.com", new(bytes.Buffer))
+			req = req.WithContext(
+				context.WithValue(context.Background(), contextSignerKey(struct{}{}), c.bearerSuffix),
+			)
+
+			if _, err := tr.RoundTrip(req); err != nil {
+				t.Fatalf("error calling RoundTrip: %v", err)
+			}
+
+			if !check.Captured {
+				t.Error("Header Authorization not set")
+			}
+
+			want := []string{"Bearer hunter2" + c.bearerSuffix}
+			if diff := cmp.Diff(want, check.Value); diff != "" {
+				t.Errorf("HTTP Authorization header want->got: %s", diff)
+			}
+		})
 	}
 }
+
+type contextSignerKey struct{}
 
 type noopSigner struct{}
 
 func (noopSigner) Sign(jwt.Claims) (string, error) {
 	return "hunter2", nil
+}
+
+func (noopSigner) SignContext(ctx context.Context, _ jwt.Claims) (string, error) {
+	// mark the returned token with the context suffix expected by the test
+	v := ctx.Value(contextSignerKey(struct{}{}))
+	return fmt.Sprintf("hunter2%v", v), nil
+}
+
+type AuthCaptureRoundTripper struct {
+	Captured bool
+	Value    []string
+}
+
+func (a *AuthCaptureRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+	h, ok := req.Header["Authorization"]
+	a.Captured = ok
+	a.Value = h
+
+	return nil, nil
 }
