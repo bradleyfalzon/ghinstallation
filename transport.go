@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/go-github/v75/github"
+	"golang.org/x/oauth2"
 )
 
 const (
@@ -153,16 +154,30 @@ func (at *accessToken) isExpired() bool {
 // Token checks the active token expiration and renews if necessary. Token returns
 // a valid access token. If renewal fails an error is returned.
 func (t *Transport) Token(ctx context.Context) (string, error) {
+	token, err := t.OAuthToken(ctx)
+	if err != nil {
+		return "", err
+	}
+	return token.AccessToken, nil
+}
+
+// OAuthToken checks the active token expiration and renews if necessary.
+// OAuthToken returns a valid oauth2.Token. If renewal fails an error is returned.
+// This is functionally the same as Token but returns an oauth2.Token instead of a string.
+func (t *Transport) OAuthToken(ctx context.Context) (*oauth2.Token, error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.token.isExpired() {
 		// Token is not set or expired/nearly expired, so refresh
 		if err := t.refreshToken(ctx); err != nil {
-			return "", fmt.Errorf("could not refresh installation id %v's token: %w", t.installationID, err)
+			return nil, fmt.Errorf("could not refresh installation id %v's token: %w", t.installationID, err)
 		}
 	}
 
-	return t.token.Token, nil
+	return &oauth2.Token{
+		AccessToken: t.token.Token,
+		Expiry:      t.token.ExpiresAt,
+	}, nil
 }
 
 // Permissions returns a transport token's GitHub installation permissions.
@@ -273,4 +288,23 @@ func cloneRequest(r *http.Request) *http.Request {
 		r2.Header[k] = append([]string(nil), s...)
 	}
 	return r2
+}
+
+// TokenSource returns a new oauth2.TokenSource for the configured Transport.
+func (t *Transport) TokenSource(ctx context.Context) oauth2.TokenSource {
+	return &tokensource{
+		ctx: ctx,
+		tr:  t,
+	}
+}
+
+type tokensource struct {
+	ctx context.Context
+	tr  *Transport
+}
+
+// Token implements the oauth2.TokenSource interface.
+// This is functionally the same as Transport.OAuthToken.
+func (ts *tokensource) Token() (*oauth2.Token, error) {
+	return ts.tr.OAuthToken(ts.ctx)
 }
