@@ -106,4 +106,4 @@ tr := NewFromAppsTransport(atr, 99)
 
 ## Dependencies
 
-- [github.com/golang-jwt/jwt-go](https://github.com/golang-jwt/jwt-go)
+- [github.com/golang-jwt/jwt/v5](https://github.com/golang-jwt/jwt)
