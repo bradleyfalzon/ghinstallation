@@ -99,6 +99,7 @@ func (t *AppsTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 		return nil, fmt.Errorf("could not sign jwt: %s", err)
 	}
 
+	req = cloneRequest(req)
 	req.Header.Set("Authorization", "Bearer "+ss)
 	req.Header.Add("Accept", acceptHeader)
 
