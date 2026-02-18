@@ -171,6 +171,7 @@ func TestNew_appendHeader(t *testing.T) {
 	tr.BaseURL = ts.URL
 
 	client := http.Client{Transport: tr}
+	//nolint:gosec // G704: URL is from test server, not user input
 	_, err = client.Do(req)
 	if err != nil {
 		t.Fatal("unexpected error from client:", err)
