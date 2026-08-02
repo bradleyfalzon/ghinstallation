@@ -3,7 +3,7 @@ package ghinstallation
 import (
 	"crypto/rsa"
 
-	jwt "github.com/golang-jwt/jwt/v4"
+	jwt "github.com/golang-jwt/jwt/v5"
 )
 
 // Signer is a JWT token signer. This is a wrapper around [jwt.SigningMethod] with predetermined

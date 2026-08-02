@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	jwt "github.com/golang-jwt/jwt/v4"
+	jwt "github.com/golang-jwt/jwt/v5"
 )
 
 // AppsTransport provides a http.RoundTripper by wrapping an existing
