@@ -206,8 +206,8 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 	installationTokenOptions := &github.InstallationTokenOptions{
 		RepositoryIDs: []int64{1234},
 		Permissions: &github.InstallationPermissions{
-			Contents: github.Ptr("write"),
-			Issues:   github.Ptr("read"),
+			Contents: new("write"),
+			Issues:   new("read"),
 		},
 	}
 
@@ -242,11 +242,11 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 				Token:     "token_string",
 				ExpiresAt: time.Now(),
 				Repositories: []github.Repository{{
-					ID: github.Ptr(int64(1234)),
+					ID: new(int64(1234)),
 				}},
 				Permissions: github.InstallationPermissions{
-					Contents: github.Ptr("write"),
-					Issues:   github.Ptr("read"),
+					Contents: new("write"),
+					Issues:   new("read"),
 				},
 			}
 			tokenReadWriter, err := GetReadWriter(accessToken)
@@ -282,8 +282,8 @@ func TestRefreshTokenWithTrailingSlashBaseURL(t *testing.T) {
 	installationTokenOptions := &github.InstallationTokenOptions{
 		RepositoryIDs: []int64{1234},
 		Permissions: &github.InstallationPermissions{
-			Contents: github.Ptr("write"),
-			Issues:   github.Ptr("read"),
+			Contents: new("write"),
+			Issues:   new("read"),
 		},
 	}
 
@@ -328,11 +328,11 @@ func TestRefreshTokenWithTrailingSlashBaseURL(t *testing.T) {
 				Token:     tokenToBe,
 				ExpiresAt: time.Now(),
 				Repositories: []github.Repository{{
-					ID: github.Ptr(int64(1234)),
+					ID: new(int64(1234)),
 				}},
 				Permissions: github.InstallationPermissions{
-					Contents: github.Ptr("write"),
-					Issues:   github.Ptr("read"),
+					Contents: new("write"),
+					Issues:   new("read"),
 				},
 			}
 			tokenReadWriter, err := GetReadWriter(accessToken)
