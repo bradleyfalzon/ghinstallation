@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/go-github/v88/github"
+	"github.com/google/go-github/v93/github"
 )
 
 const (
@@ -85,11 +85,11 @@ func TestNew(t *testing.T) {
 
 	// test id getter methods
 	if tr.AppID() != appID {
-		t.Fatalf("appID got: %q want: %q", tr.AppID(), appID)
+		t.Fatalf("appID got: %d want: %d", tr.AppID(), appID)
 	}
 
 	if tr.InstallationID() != installationID {
-		t.Fatalf("installationID got: %q want: %q", tr.InstallationID(), installationID)
+		t.Fatalf("installationID got: %d want: %d", tr.InstallationID(), installationID)
 	}
 
 	client := http.Client{Transport: tr}
@@ -206,8 +206,8 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 	installationTokenOptions := &github.InstallationTokenOptions{
 		RepositoryIDs: []int64{1234},
 		Permissions: &github.InstallationPermissions{
-			Contents: github.Ptr("write"),
-			Issues:   github.Ptr("read"),
+			Contents: new("write"),
+			Issues:   new("read"),
 		},
 	}
 
@@ -242,11 +242,11 @@ func TestRefreshTokenWithParameters(t *testing.T) {
 				Token:     "token_string",
 				ExpiresAt: time.Now(),
 				Repositories: []github.Repository{{
-					ID: github.Ptr(int64(1234)),
+					ID: new(int64(1234)),
 				}},
 				Permissions: github.InstallationPermissions{
-					Contents: github.Ptr("write"),
-					Issues:   github.Ptr("read"),
+					Contents: new("write"),
+					Issues:   new("read"),
 				},
 			}
 			tokenReadWriter, err := GetReadWriter(accessToken)
@@ -282,8 +282,8 @@ func TestRefreshTokenWithTrailingSlashBaseURL(t *testing.T) {
 	installationTokenOptions := &github.InstallationTokenOptions{
 		RepositoryIDs: []int64{1234},
 		Permissions: &github.InstallationPermissions{
-			Contents: github.Ptr("write"),
-			Issues:   github.Ptr("read"),
+			Contents: new("write"),
+			Issues:   new("read"),
 		},
 	}
 
@@ -328,11 +328,11 @@ func TestRefreshTokenWithTrailingSlashBaseURL(t *testing.T) {
 				Token:     tokenToBe,
 				ExpiresAt: time.Now(),
 				Repositories: []github.Repository{{
-					ID: github.Ptr(int64(1234)),
+					ID: new(int64(1234)),
 				}},
 				Permissions: github.InstallationPermissions{
-					Contents: github.Ptr("write"),
-					Issues:   github.Ptr("read"),
+					Contents: new("write"),
+					Issues:   new("read"),
 				},
 			}
 			tokenReadWriter, err := GetReadWriter(accessToken)
