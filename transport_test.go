@@ -85,11 +85,11 @@ func TestNew(t *testing.T) {
 
 	// test id getter methods
 	if tr.AppID() != appID {
-		t.Fatalf("appID got: %q want: %q", tr.AppID(), appID)
+		t.Fatalf("appID got: %d want: %d", tr.AppID(), appID)
 	}
 
 	if tr.InstallationID() != installationID {
-		t.Fatalf("installationID got: %q want: %q", tr.InstallationID(), installationID)
+		t.Fatalf("installationID got: %d want: %d", tr.InstallationID(), installationID)
 	}
 
 	client := http.Client{Transport: tr}
